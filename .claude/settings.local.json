@@ -50,7 +50,8 @@
       "Bash(./greet:*)",
       "Bash(./moxie build:*)",
       "Bash(timeout 2 ./webserver:*)",
-      "Bash(../../moxie run:*)"
+      "Bash(../../moxie run:*)",
+      "Bash(./moxie run:*)"
     ],
     "deny": [],
     "ask": []

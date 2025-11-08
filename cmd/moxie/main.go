@@ -355,6 +355,17 @@ func transpileFile(src, dst string) error {
 
 // transformAST transforms the AST from Moxie to standard Go
 func transformAST(file *ast.File) {
+	// Transform package name (if needed)
+	// For now, Moxie and Go use the same package names (lowercase)
+	// This allows for future divergence if needed
+	if file.Name != nil {
+		moxiePkg := file.Name.Name
+		goPkg := pkgMap.MoxieToGo(moxiePkg)
+		if goPkg != moxiePkg {
+			file.Name.Name = goPkg
+		}
+	}
+
 	// Transform import paths
 	for _, imp := range file.Imports {
 		if imp.Path != nil {
@@ -367,8 +378,8 @@ func transformAST(file *ast.File) {
 	}
 
 	// Could add more transformations here:
-	// - Rename package declarations
 	// - Transform type names
+	// - Transform function names
 	// - Add instrumentation
 	// etc.
 }
