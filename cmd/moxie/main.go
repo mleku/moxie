@@ -89,7 +89,9 @@ func buildCommand(args []string) error {
 	if err != nil {
 		return fmt.Errorf("creating temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	// DEBUG: Don't remove tmpDir so we can inspect it
+	fmt.Fprintf(os.Stderr, "DEBUG: Build directory: %s\n", tmpDir)
+	// defer os.RemoveAll(tmpDir)
 
 	// Determine source directory and output binary name
 	srcDir := "."
@@ -355,6 +357,14 @@ func transpileFile(src, dst string) error {
 
 // transformAST transforms the AST from Moxie to standard Go
 func transformAST(file *ast.File) {
+	// Phase 2: Apply syntax transformations (Moxie-specific syntax to Go)
+	syntaxTx := NewSyntaxTransformer()
+	if err := syntaxTx.Transform(file); err != nil {
+		// For now, print warning but continue
+		// TODO: Make this a hard error once channel literals are fully implemented
+		fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+	}
+
 	// Transform package name (if needed)
 	// For now, Moxie and Go use the same package names (lowercase)
 	// This allows for future divergence if needed

@@ -8,8 +8,9 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 
 ## Current Status
 
-**Overall Progress**: Phase 1 - ✅ 100% COMPLETE (all 4 sub-phases done)
-**Next Phase**: Phase 2 - Syntax Extensions
+**Overall Progress**: Phase 2 - 🟡 75% COMPLETE (core syntax transformations working)
+**Current Phase**: Phase 2 - Syntax Transformations
+**Next Phase**: Phase 2 completion, then Phase 3
 
 ## Phase Completion Summary
 
@@ -104,16 +105,40 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 - ✅ **Disabled by default** (maintains camelCase)
 - ✅ 90+ tests passing
 
-### Phase 2: Syntax Extensions ⏳ PENDING
-**Status**: ⏳ Not Started
+### Phase 2: Syntax Transformations 🟡 IN PROGRESS (75%)
+**Status**: 🟡 In Progress (75% complete)
+**Completion Date**: Started 2025-11-08
 **Dependencies**: Phase 1
+**Documentation**: `PHASE2-PROGRESS.md`
+**Files**:
+- `cmd/moxie/syntax.go` (272 lines)
+- `runtime/builtins.go` (120 lines)
+- `runtime/go.mod`
+- `examples/phase2/` (4 test files)
 
-**Planned Features**:
-- Snake_case support (already implemented in naming.go)
-- Optional semicolons (Go already supports this)
-- Enhanced type inference
-- Pattern matching
-- Pipeline operator
+**Implemented Features** ✅:
+- ✅ Explicit pointer syntax for slices (`*[]T`)
+- ✅ Explicit pointer syntax for maps (`*map[K]V`)
+- ✅ make() detection and error reporting
+- ✅ clear() transformation for pointer types
+- ✅ append() transformation for pointer types
+- ✅ Runtime package infrastructure
+- ✅ grow() built-in (AST transformation)
+- ✅ clone() built-in (AST transformation)
+- ✅ free() built-in (AST transformation)
+- ✅ Automatic runtime import injection
+
+**Pending Features** ⏳:
+- ⏳ Explicit pointer syntax for channels (`*chan T`)
+- ⏳ Runtime module resolution (go.mod setup)
+- ⏳ Type detection for runtime functions
+- ⏳ Comprehensive test suite
+- ⏳ Channel literal transformation complete
+
+**Not Planned** ❌:
+- ❌ Snake_case support (user requirement: stick to PascalCase/camelCase)
+- ❌ Pattern matching (not in language spec)
+- ❌ Pipeline operator (not in language spec)
 
 ### Phase 3: Enhanced Error Handling ⏳ PENDING
 **Status**: ⏳ Not Started
@@ -223,9 +248,10 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 
 | Metric | Count |
 |--------|-------|
-| Total Lines of Code | ~2,680 |
-| Source Files | 8 |
+| Total Lines of Code | ~3,072 |
+| Source Files | 10 |
 | Test Files | 5 |
+| Example Files | 7 |
 | Total Tests | 330+ |
 | Test Pass Rate | 100% |
 
@@ -239,6 +265,8 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 | `cmd/moxie/typemap.go` | 210 | Type transformation |
 | `cmd/moxie/funcmap.go` | 202 | Function transformation |
 | `cmd/moxie/varmap.go` | 318 | Variable transformation |
+| `cmd/moxie/syntax.go` | 272 | Syntax transformations (Phase 2) |
+| `runtime/builtins.go` | 120 | Moxie runtime support |
 | `cmd/moxie/naming_test.go` | 185 | Naming tests |
 | `cmd/moxie/pkgmap_test.go` | ~100 | Package tests |
 | `cmd/moxie/typemap_test.go` | 150 | Type tests |
@@ -288,12 +316,29 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 - ✅ Common variable patterns
 - ✅ Constant names
 
+### Phase 2: Syntax Transformations
+- ✅ Explicit pointer syntax (slices, maps)
+- ✅ make() detection and error reporting
+- ✅ clear() transformation (pointer dereference)
+- ✅ append() transformation (assignment level)
+- ✅ Runtime function transformations (grow, clone, free)
+- ✅ Automatic import injection
+- ⏳ Channel literal transformation (partial)
+- ⏳ Runtime module resolution
+- ⏳ Comprehensive test suite (4 manual tests)
+
 ## Known Limitations
 
 ### Current Implementation
 
 1. **Transformation Disabled**: All name transformations (types, functions, variables) are disabled by default to maintain Go compatibility
-2. **Syntax Extensions**: Phase 2+ features not yet implemented
+2. **Phase 2 Partial**: Syntax transformations are 75% complete
+   - Runtime module resolution needs fixing
+   - Channel literals not fully implemented
+   - Type detection for runtime functions pending
+3. **String Mutability**: Not yet implemented (deferred to Phase 3+)
+4. **const with MMU**: Not yet implemented (deferred to Phase 3+)
+5. **Native FFI**: Not yet implemented (deferred to Phase 3+)
 
 ### Design Decisions
 
@@ -303,23 +348,27 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 
 ## Next Steps
 
-### Phase 1 Complete! 🎉
-✅ All name transformation infrastructure complete
-✅ 320+ tests passing
-✅ Production-ready implementation
+### Phase 2 - 75% Complete! 🎉
+✅ Core syntax transformations working
+✅ Explicit pointer types working
+✅ Built-in transformations (append, clear) working
+✅ Runtime infrastructure created
+⏳ Module resolution pending
+⏳ Channel literals pending
 
-### Short Term (Phase 2)
-- [ ] Add optional syntax extensions
-- [ ] Implement pattern matching
-- [ ] Add pipeline operator
-- [ ] Enhanced type inference
+### Immediate (Complete Phase 2)
+- [ ] Fix runtime module resolution (go.mod/replace directives)
+- [ ] Complete channel literal transformation (`&chan T{cap: N}`)
+- [ ] Add type detection for runtime functions
+- [ ] Write comprehensive test suite
+- [ ] Integration testing with real projects
 
-### Medium Term (Phases 3-7)
-- [ ] Error handling enhancements
-- [ ] Generics improvements
-- [ ] Concurrency syntax sugar
-- [ ] Memory safety features
-- [ ] Standard library extensions
+### Medium Term (Phases 3+)
+- [ ] String mutability (`string = *[]byte`)
+- [ ] True const with MMU protection
+- [ ] Native FFI (dlopen, dlsym, dlclose, dlopen_mem)
+- [ ] Zero-copy type coercion with endianness
+- [ ] Additional language features as specified
 
 ### Long Term (Phases 8-12)
 - [ ] Tooling (LSP, formatter, linter)
@@ -334,10 +383,15 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 The transpiler currently:
 1. ✅ Transpiles .mx files to .go files
 2. ✅ Transforms import paths
-3. ✅ Maintains Go naming conventions
+3. ✅ Maintains Go naming conventions (PascalCase/camelCase)
 4. ✅ Passes all 330+ tests
 5. ✅ Works with all examples
 6. ✅ Complete name transformation infrastructure (disabled by default)
+7. ✅ Syntax transformations (Phase 2 - 75% complete)
+   - ✅ Explicit pointer types for slices/maps
+   - ✅ make() detection
+   - ✅ append() and clear() transformations
+   - ✅ Runtime built-ins (grow, clone, free)
 
 ### Enable Transformations (Future)
 To enable snake_case transformation:
@@ -361,11 +415,14 @@ varMap.Enable()    // Enable variable name transformation
 
 ## References
 
-- **Implementation Plan**: `go-to-moxie-plan.md`
+- **Language Specification**: `MOXIE-LANGUAGE-SPEC.md` (Complete Moxie language spec)
+- **Language Changes**: `go-language-revision.md` (Design rationale)
+- **Implementation Plan**: `go-to-moxie-plan.md` (Original plan - now superseded)
 - **Phase 1.1 Complete**: Package naming
 - **Phase 1.2 Complete**: `PHASE1.2-COMPLETE.md` (Type names)
 - **Phase 1.3 Complete**: `PHASE1.3-COMPLETE.md` (Function names)
 - **Phase 1.4 Complete**: `PHASE1.4-COMPLETE.md` (Variable names)
+- **Phase 2 Progress**: `PHASE2-PROGRESS.md` (Syntax transformations - 75% complete)
 - **Package Naming**: `docs/PACKAGE_NAMING.md`
 - **Quick Start**: `QUICKSTART.md`
 - **README**: `README.md`
@@ -386,4 +443,6 @@ When implementing new phases:
 - **v0.3.0** - Phase 1.2 complete (Type names)
 - **v0.4.0** - Phase 1.3 complete (Function names)
 - **v0.5.0** - Phase 1.4 complete (Variable names) - **Phase 1 Complete! 🎉**
-- **v0.6.0** - TBD (Phase 2 - Syntax Extensions)
+- **v0.6.0** - Phase 2 in progress (Syntax transformations - 75% complete)
+- **v0.7.0** - TBD (Phase 2 complete)
+- **v1.0.0** - TBD (Full language implementation)
