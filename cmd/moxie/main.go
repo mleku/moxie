@@ -377,8 +377,8 @@ func transformAST(file *ast.File) {
 		}
 	}
 
-	// Transform type and function names throughout the AST
-	// Note: Currently disabled (typeMap.enabled = false, funcMap.enabled = false)
+	// Transform type, function, and variable names throughout the AST
+	// Note: Currently disabled (typeMap.enabled = false, funcMap.enabled = false, varMap.enabled = false)
 	// to maintain PascalCase/camelCase. Can be enabled in the future if desired
 	ast.Inspect(file, func(n ast.Node) bool {
 		switch node := n.(type) {
@@ -395,8 +395,14 @@ func transformAST(file *ast.File) {
 					// Transform the type definition itself
 					typeMap.transformTypeExpr(s.Type)
 
+					// Transform struct fields if this is a struct type
+					if structType, ok := s.Type.(*ast.StructType); ok {
+						varMap.transformFieldList(structType.Fields)
+					}
+
 				case *ast.ValueSpec:
-					// Transform variable/constant type: var x MyType
+					// Transform variable/constant names and types
+					varMap.transformValueSpec(s)
 					typeMap.transformTypeExpr(s.Type)
 				}
 			}
@@ -405,17 +411,25 @@ func transformAST(file *ast.File) {
 			// Transform function/method declaration
 			funcMap.transformFuncDecl(node)
 
-			// Transform function receiver, parameters, and results (types)
+			// Transform function receiver, parameters, and results
 			if node.Recv != nil {
 				typeMap.transformFieldList(node.Recv)
+				varMap.transformFieldList(node.Recv)
 			}
 			if node.Type != nil {
 				if node.Type.Params != nil {
 					typeMap.transformFieldList(node.Type.Params)
+					varMap.transformFieldList(node.Type.Params)
 				}
 				if node.Type.Results != nil {
 					typeMap.transformFieldList(node.Type.Results)
+					varMap.transformFieldList(node.Type.Results)
 				}
+			}
+
+			// Transform function body
+			if node.Body != nil {
+				varMap.transformBlockStmt(node.Body)
 			}
 
 		case *ast.CallExpr:
@@ -425,6 +439,21 @@ func transformAST(file *ast.File) {
 		case *ast.FuncLit:
 			// Transform function literals (anonymous functions)
 			funcMap.transformFuncLit(node)
+
+			// Transform parameters and results
+			if node.Type != nil {
+				if node.Type.Params != nil {
+					varMap.transformFieldList(node.Type.Params)
+				}
+				if node.Type.Results != nil {
+					varMap.transformFieldList(node.Type.Results)
+				}
+			}
+
+			// Transform function body
+			if node.Body != nil {
+				varMap.transformBlockStmt(node.Body)
+			}
 		}
 		return true
 	})

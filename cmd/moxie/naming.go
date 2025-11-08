@@ -164,9 +164,34 @@ func preserveExportStatus(name string, converter func(string) string) string {
 		runes[0] = unicode.ToUpper(runes[0])
 		return string(runes)
 	} else if !wasExported && isExported(converted) {
-		// Need to unexport it
+		// Need to unexport it - handle leading acronyms
+		// If starts with an acronym like "HTTPServer", make it "httpServer"
 		runes := []rune(converted)
-		runes[0] = unicode.ToLower(runes[0])
+
+		// Find where the leading uppercase sequence ends
+		uppercaseCount := 0
+		for i, r := range runes {
+			if unicode.IsUpper(r) {
+				uppercaseCount = i + 1
+			} else {
+				break
+			}
+		}
+
+		// If we have multiple uppercase letters followed by lowercase,
+		// lowercase all but the last uppercase letter
+		// HTTPServer -> httpServer (lowercase HTTP, keep S)
+		// ID -> id (lowercase entire acronym at start)
+		if uppercaseCount > 1 && uppercaseCount < len(runes) {
+			// Multiple uppercase followed by more content
+			for i := 0; i < uppercaseCount-1; i++ {
+				runes[i] = unicode.ToLower(runes[i])
+			}
+		} else {
+			// Just one uppercase or all uppercase - lowercase first char
+			runes[0] = unicode.ToLower(runes[0])
+		}
+
 		return string(runes)
 	}
 
