@@ -25,7 +25,12 @@
       "Skill(golang)",
       "Bash(/tmp/find verify-name Bitcoin.Nostr)",
       "Bash(/tmp/find generate-key)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(go version:*)",
+      "Bash(./make.bash:*)",
+      "Bash(cd:*)",
+      "Bash(./all.bash)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
