@@ -2,8 +2,8 @@
 
 **Systems programming with spirit.**
 
-![Phase 0: 75%](https://img.shields.io/badge/Phase%200-75%25-yellow)
-![Overall: 0.75%](https://img.shields.io/badge/Overall-0.75%25-red)
+![Phase 0: 85%](https://img.shields.io/badge/Phase%200-85%25-yellow)
+![Overall: 0.85%](https://img.shields.io/badge/Overall-0.85%25-red)
 ![Status: In Progress](https://img.shields.io/badge/Status-In%20Progress-blue)
 
 Moxie is a fork of the Go programming language with fundamental revisions based on 8 years of real-world experience. It addresses core design inconsistencies while preserving Go's philosophy of simplicity and explicitness.

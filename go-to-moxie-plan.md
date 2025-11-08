@@ -10,7 +10,7 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
 
 | Phase | Status | Progress | Est. Duration | Notes |
 |-------|--------|----------|---------------|-------|
-| **Phase 0** | 🔄 In Progress | 75% | 2-3 days | Branding complete, build system pending |
+| **Phase 0** | 🔄 In Progress | 85% | 2-3 days | Branding & env docs complete, build pending |
 | **Phase 1** | ⏳ Pending | 0% | 15-22 days | Type System Foundation |
 | **Phase 2** | ⏳ Pending | 0% | 15-22 days | Built-in Functions |
 | **Phase 3** | ⏳ Pending | 0% | 17-24 days | String & Byte Unification |
@@ -22,7 +22,7 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
 | **Phase 9** | ⏳ Pending | 0% | 22-31 days | Documentation & Tools |
 | **Phase 10** | ⏳ Pending | 0% | Ongoing | Releases |
 
-**Overall Project Progress:** 0.75% (Phase 0: 75% × 10% weight)
+**Overall Project Progress:** 0.85% (Phase 0: 85% × 10% weight)
 
 **Current Milestone:** Complete Phase 0 - Foundation & Setup
 **Next Milestone:** Begin Phase 1 - Type System Foundation
@@ -57,7 +57,7 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
 
 ## Phase 0: Foundation & Setup
 
-**Status:** 🔄 IN PROGRESS (75% complete)
+**Status:** 🔄 IN PROGRESS (85% complete)
 **Started:** 2025-11-08
 **Estimated Completion:** 2025-11-09
 
@@ -83,7 +83,8 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
   - [x] **DONE:** Update compiler name (go → moxie) in source
   - [x] **DONE:** Update command help and error messages
   - [x] **DONE:** Document all branding changes (BRANDING-CHANGES.md)
-  - [ ] **TODO:** Update GOROOT → MOXIEROOT environment variables
+  - [x] **DONE:** Document environment variables strategy (ENVIRONMENT-VARIABLES.md)
+  - [x] **DECISION:** Keep GO* variables for backward compatibility (Phase 4+ migration)
 - [ ] Set up build infrastructure
   - [ ] **TODO:** Modify src/make.bash for Moxie
   - [ ] **TODO:** Update src/cmd/dist for new toolchain name
@@ -102,6 +103,8 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
 - ✅ Created: PHASE0-STATUS.md
 - ✅ Created: PHASE0-COMPLETE.md
 - ✅ Created: BRANDING-CHANGES.md
+- ✅ Created: BRANDING-COMPLETE.md
+- ✅ Created: ENVIRONMENT-VARIABLES.md
 - ✅ src/cmd/go/internal/base/base.go (main command branding)
 - ✅ src/cmd/go/internal/version/version.go (version command)
 - ✅ src/cmd/go/main.go (error messages)
@@ -110,7 +113,7 @@ This document provides a comprehensive, dependency-ordered plan for forking Go a
 
 **Next Steps:**
 1. ✅ ~~Run renaming script~~ - Completed manually with targeted updates
-2. Update environment variable references (GOROOT → MOXIEROOT)
+2. ✅ ~~Environment variables~~ - Documented strategy, keeping GO* for compatibility
 3. Modify build scripts (make.bash, all.bash, etc.)
 4. Update binary output names
 5. Attempt first build
