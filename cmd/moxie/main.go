@@ -377,14 +377,14 @@ func transformAST(file *ast.File) {
 		}
 	}
 
-	// Transform type names throughout the AST
-	// Note: Currently disabled (typeMap.enabled = false) to maintain PascalCase
-	// Can be enabled in the future if desired
+	// Transform type and function names throughout the AST
+	// Note: Currently disabled (typeMap.enabled = false, funcMap.enabled = false)
+	// to maintain PascalCase/camelCase. Can be enabled in the future if desired
 	ast.Inspect(file, func(n ast.Node) bool {
-		switch decl := n.(type) {
+		switch node := n.(type) {
 		case *ast.GenDecl:
 			// Handle type, var, const declarations
-			for _, spec := range decl.Specs {
+			for _, spec := range node.Specs {
 				switch s := spec.(type) {
 				case *ast.TypeSpec:
 					// Transform type declaration: type MyType struct {}
@@ -402,18 +402,29 @@ func transformAST(file *ast.File) {
 			}
 
 		case *ast.FuncDecl:
-			// Transform function receiver, parameters, and results
-			if decl.Recv != nil {
-				typeMap.transformFieldList(decl.Recv)
+			// Transform function/method declaration
+			funcMap.transformFuncDecl(node)
+
+			// Transform function receiver, parameters, and results (types)
+			if node.Recv != nil {
+				typeMap.transformFieldList(node.Recv)
 			}
-			if decl.Type != nil {
-				if decl.Type.Params != nil {
-					typeMap.transformFieldList(decl.Type.Params)
+			if node.Type != nil {
+				if node.Type.Params != nil {
+					typeMap.transformFieldList(node.Type.Params)
 				}
-				if decl.Type.Results != nil {
-					typeMap.transformFieldList(decl.Type.Results)
+				if node.Type.Results != nil {
+					typeMap.transformFieldList(node.Type.Results)
 				}
 			}
+
+		case *ast.CallExpr:
+			// Transform function calls
+			funcMap.transformCallExpr(node)
+
+		case *ast.FuncLit:
+			// Transform function literals (anonymous functions)
+			funcMap.transformFuncLit(node)
 		}
 		return true
 	})
