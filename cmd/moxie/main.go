@@ -377,11 +377,46 @@ func transformAST(file *ast.File) {
 		}
 	}
 
-	// Could add more transformations here:
-	// - Transform type names
-	// - Transform function names
-	// - Add instrumentation
-	// etc.
+	// Transform type names throughout the AST
+	// Note: Currently disabled (typeMap.enabled = false) to maintain PascalCase
+	// Can be enabled in the future if desired
+	ast.Inspect(file, func(n ast.Node) bool {
+		switch decl := n.(type) {
+		case *ast.GenDecl:
+			// Handle type, var, const declarations
+			for _, spec := range decl.Specs {
+				switch s := spec.(type) {
+				case *ast.TypeSpec:
+					// Transform type declaration: type MyType struct {}
+					if typeMap.ShouldTransform(s.Name.Name) {
+						typeMap.RegisterUserType(s.Name.Name)
+						s.Name.Name = typeMap.TransformTypeName(s.Name.Name)
+					}
+					// Transform the type definition itself
+					typeMap.transformTypeExpr(s.Type)
+
+				case *ast.ValueSpec:
+					// Transform variable/constant type: var x MyType
+					typeMap.transformTypeExpr(s.Type)
+				}
+			}
+
+		case *ast.FuncDecl:
+			// Transform function receiver, parameters, and results
+			if decl.Recv != nil {
+				typeMap.transformFieldList(decl.Recv)
+			}
+			if decl.Type != nil {
+				if decl.Type.Params != nil {
+					typeMap.transformFieldList(decl.Type.Params)
+				}
+				if decl.Type.Results != nil {
+					typeMap.transformFieldList(decl.Type.Results)
+				}
+			}
+		}
+		return true
+	})
 }
 
 // transformImportPath converts Moxie import paths to standard Go paths
