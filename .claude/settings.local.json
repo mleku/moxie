@@ -30,7 +30,8 @@
       "Bash(./make.bash:*)",
       "Bash(cd:*)",
       "Bash(./all.bash)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
