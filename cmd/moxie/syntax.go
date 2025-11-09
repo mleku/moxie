@@ -17,6 +17,7 @@ type SyntaxTransformer struct {
 	errors             []error
 	needsRuntimeImport bool
 	needsBytesImport   bool
+	typeTracker        *TypeTracker
 }
 
 // NewSyntaxTransformer creates a new syntax transformer
@@ -25,6 +26,7 @@ func NewSyntaxTransformer() *SyntaxTransformer {
 		errors:             make([]error, 0),
 		needsRuntimeImport: false,
 		needsBytesImport:   false,
+		typeTracker:        NewTypeTracker(),
 	}
 }
 
@@ -43,6 +45,11 @@ func (st *SyntaxTransformer) Transform(file *ast.File) error {
 		astutil.Apply(file, func(cursor *astutil.Cursor) bool {
 			node := cursor.Node()
 			switch n := node.(type) {
+			case *ast.GenDecl:
+				// Record type information from declarations (first pass only)
+				if pass == 0 {
+					st.typeTracker.RecordDecl(n)
+				}
 			case *ast.Ident:
 				// Transform string type to *[]byte (only in first pass)
 				if pass == 0 {
@@ -72,6 +79,8 @@ func (st *SyntaxTransformer) Transform(file *ast.File) error {
 				// TODO: Handle in BinaryExpr, AssignStmt, etc.
 			case *ast.AssignStmt:
 				if pass == 0 {
+					// Record type information before transforming
+					st.typeTracker.RecordAssign(n)
 					st.transformAssignStmt(n)
 					st.transformStringLiteralsInAssign(n)
 				}
@@ -520,9 +529,11 @@ func (st *SyntaxTransformer) transformCallExpr(node *ast.CallExpr) {
 
 		case "clone":
 			// clone() is a Moxie built-in
-			// Transform: clone(v) -> moxie.CloneSlice(v) or moxie.CloneMap(v)
-			// For now, use CloneSlice - type-specific versions can be optimized later
-			st.transformToRuntimeCall(node, "CloneSlice") // TODO: Detect type and use appropriate function
+			// Transform based on type:
+			//   clone(slice) -> moxie.CloneSlice[T](slice)
+			//   clone(map)   -> moxie.CloneMap[K, V](map)
+			//   clone(struct) -> moxie.DeepCopy[T](struct)
+			st.transformCloneCall(node)
 
 		case "clear":
 			// clear() exists in Go 1.21+
@@ -532,8 +543,8 @@ func (st *SyntaxTransformer) transformCallExpr(node *ast.CallExpr) {
 
 		case "free":
 			// free() is a Moxie built-in that provides GC hints
-			// Transform: free(v) -> moxie.FreeSlice(v)
-			st.transformToRuntimeCall(node, "FreeSlice") // TODO: Detect type and use appropriate function
+			// Transform: free(v) -> moxie.Free[T](v) or moxie.FreeSlice[T](v) or moxie.FreeMap[K,V](v)
+			st.transformFreeCall(node)
 
 		case "dlopen":
 			// dlopen() is a Moxie FFI built-in
@@ -1227,5 +1238,198 @@ func (st *SyntaxTransformer) transformToRuntimeCallWithArgs(node *ast.CallExpr, 
 		Sel: &ast.Ident{Name: runtimeFunc},
 	}
 	node.Args = args
+	st.needsRuntimeImport = true
+}
+
+// transformCloneCall transforms clone() calls based on argument type
+func (st *SyntaxTransformer) transformCloneCall(node *ast.CallExpr) {
+	if len(node.Args) == 0 {
+		st.errors = append(st.errors, fmt.Errorf("clone() requires an argument"))
+		return
+	}
+
+	arg := node.Args[0]
+	var argType ast.Expr
+
+	// Try to infer type from the argument
+	switch a := arg.(type) {
+	case *ast.Ident:
+		// Look up identifier in type tracker
+		argType = st.typeTracker.GetType(a.Name)
+	case *ast.UnaryExpr:
+		// &T{...}
+		if a.Op == token.AND {
+			if compLit, ok := a.X.(*ast.CompositeLit); ok {
+				argType = compLit.Type
+			}
+		}
+	default:
+		// Try to infer from the expression
+		argType = st.typeTracker.inferTypeFromExpr(arg)
+	}
+
+	// If we couldn't determine type, default to DeepCopy (safest option)
+	if argType == nil {
+		st.transformToRuntimeCall(node, "DeepCopy")
+		return
+	}
+
+	// Determine which clone function to use based on type
+	if st.typeTracker.IsSliceType(argType) {
+		// Transform to CloneSlice[T]
+		elemType := st.typeTracker.extractElementType(argType)
+		if elemType != nil {
+			// moxie.CloneSlice[T](arg)
+			node.Fun = &ast.IndexExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "moxie"},
+					Sel: &ast.Ident{Name: "CloneSlice"},
+				},
+				Index: elemType,
+			}
+		} else {
+			// Can't determine element type, use DeepCopy
+			st.transformToRuntimeCall(node, "DeepCopy")
+		}
+	} else if st.typeTracker.IsMapType(argType) {
+		// Transform to CloneMap[K, V]
+		keyType, valueType := st.typeTracker.GetMapKeyValueTypes(argType)
+		if keyType != nil && valueType != nil {
+			// moxie.CloneMap[K, V](arg)
+			node.Fun = &ast.IndexListExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "moxie"},
+					Sel: &ast.Ident{Name: "CloneMap"},
+				},
+				Indices: []ast.Expr{keyType, valueType},
+			}
+		} else {
+			// Can't determine key/value types, use DeepCopy
+			st.transformToRuntimeCall(node, "DeepCopy")
+		}
+	} else {
+		// For structs and other types, use DeepCopy
+		// Extract the base type (remove pointer if present)
+		baseType := argType
+		if starExpr, ok := argType.(*ast.StarExpr); ok {
+			baseType = starExpr.X
+		}
+
+		// moxie.DeepCopy[T](arg)
+		node.Fun = &ast.IndexExpr{
+			X: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "DeepCopy"},
+			},
+			Index: baseType,
+		}
+	}
+
+	st.needsRuntimeImport = true
+}
+
+// transformFreeCall transforms free() calls based on argument type
+func (st *SyntaxTransformer) transformFreeCall(node *ast.CallExpr) {
+	if len(node.Args) == 0 {
+		st.errors = append(st.errors, fmt.Errorf("free() requires an argument"))
+		return
+	}
+
+	arg := node.Args[0]
+	var argType ast.Expr
+
+	// Try to infer type from the argument
+	switch a := arg.(type) {
+	case *ast.Ident:
+		// Look up identifier in type tracker
+		argType = st.typeTracker.GetType(a.Name)
+		if argType == nil {
+			// Can't find type, use generic Free without type params
+			node.Fun = &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "Free"},
+			}
+			st.needsRuntimeImport = true
+			return
+		}
+	case *ast.UnaryExpr:
+		// &T{...}
+		if a.Op == token.AND {
+			if compLit, ok := a.X.(*ast.CompositeLit); ok {
+				argType = compLit.Type
+			}
+		}
+	default:
+		// Try to infer from the expression
+		argType = st.typeTracker.inferTypeFromExpr(arg)
+	}
+
+	// If we couldn't determine type, use generic Free
+	if argType == nil {
+		node.Fun = &ast.SelectorExpr{
+			X:   &ast.Ident{Name: "moxie"},
+			Sel: &ast.Ident{Name: "Free"},
+		}
+		st.needsRuntimeImport = true
+		return
+	}
+
+	// Determine which free function to use based on type
+	if st.typeTracker.IsSliceType(argType) {
+		// Transform to FreeSlice[T]
+		elemType := st.typeTracker.extractElementType(argType)
+		if elemType != nil {
+			// moxie.FreeSlice[T](arg)
+			node.Fun = &ast.IndexExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "moxie"},
+					Sel: &ast.Ident{Name: "FreeSlice"},
+				},
+				Index: elemType,
+			}
+		} else {
+			// Can't determine element type, use generic Free
+			node.Fun = &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "Free"},
+			}
+		}
+	} else if st.typeTracker.IsMapType(argType) {
+		// Transform to FreeMap[K, V]
+		keyType, valueType := st.typeTracker.GetMapKeyValueTypes(argType)
+		if keyType != nil && valueType != nil {
+			// moxie.FreeMap[K, V](arg)
+			node.Fun = &ast.IndexListExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "moxie"},
+					Sel: &ast.Ident{Name: "FreeMap"},
+				},
+				Indices: []ast.Expr{keyType, valueType},
+			}
+		} else {
+			// Can't determine key/value types, use generic Free
+			node.Fun = &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "Free"},
+			}
+		}
+	} else {
+		// For structs and other types, use Free[T]
+		// Extract the base type (remove pointer if present)
+		baseType := argType
+		if starExpr, ok := argType.(*ast.StarExpr); ok {
+			baseType = starExpr.X
+		}
+
+		// moxie.Free[T](arg)
+		node.Fun = &ast.IndexExpr{
+			X: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "Free"},
+			},
+			Index: baseType,
+		}
+	}
+
 	st.needsRuntimeImport = true
 }

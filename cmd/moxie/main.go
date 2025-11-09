@@ -135,8 +135,8 @@ func buildCommand(args []string) error {
 		// Transpile single file directly to tmpDir (flatten structure)
 		baseName := filepath.Base(srcFile)
 		dstPath := filepath.Join(tmpDir, baseName)
-		if filepath.Ext(dstPath) == ".mx" {
-			dstPath = dstPath[:len(dstPath)-3] + ".go"
+		if filepath.Ext(dstPath) == ".x" {
+			dstPath = dstPath[:len(dstPath)-2] + ".go"
 		}
 
 		// Transpile the file
@@ -264,7 +264,7 @@ func runCommand(args []string) error {
 	var sourceFile string
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		ext := filepath.Ext(args[0])
-		if ext == ".go" || ext == ".mx" {
+		if ext == ".go" || ext == ".x" {
 			srcDir = filepath.Dir(args[0])
 			sourceFile = filepath.Base(args[0])
 		}
@@ -288,11 +288,11 @@ func runCommand(args []string) error {
 		return fmt.Errorf("copying runtime: %w", err)
 	}
 
-	// Convert .mx file reference to .go for go run
+	// Convert .x file reference to .go for go run
 	runArgs := make([]string, len(args))
 	copy(runArgs, args)
-	if sourceFile != "" && filepath.Ext(sourceFile) == ".mx" {
-		runArgs[0] = sourceFile[:len(sourceFile)-3] + ".go"
+	if sourceFile != "" && filepath.Ext(sourceFile) == ".x" {
+		runArgs[0] = sourceFile[:len(sourceFile)-2] + ".go"
 	}
 
 	cmd := exec.Command("go", append([]string{"run"}, runArgs...)...)
@@ -370,9 +370,9 @@ func transpileTree(srcDir, dstDir string) error {
 			return nil
 		}
 
-		// Only process .mx and .go files
+		// Only process .x and .go files
 		ext := filepath.Ext(path)
-		if ext != ".mx" && ext != ".go" {
+		if ext != ".x" && ext != ".go" {
 			return nil
 		}
 
@@ -383,9 +383,9 @@ func transpileTree(srcDir, dstDir string) error {
 		}
 		dstPath := filepath.Join(dstDir, relPath)
 
-		// Convert .mx extension to .go for output
-		if filepath.Ext(dstPath) == ".mx" {
-			dstPath = dstPath[:len(dstPath)-3] + ".go"
+		// Convert .x extension to .go for output
+		if filepath.Ext(dstPath) == ".x" {
+			dstPath = dstPath[:len(dstPath)-2] + ".go"
 		}
 
 		// Create destination directory

@@ -7,6 +7,7 @@ package runtime
 
 import (
 	"fmt"
+	"reflect"
 	goruntime "runtime"
 	"strconv"
 	"unsafe"
@@ -71,6 +72,74 @@ func CloneMap[K comparable, V any](m *map[K]V) *map[K]V {
 		newMap[k] = v
 	}
 	return &newMap
+}
+
+// DeepCopy creates a deep copy of any value using reflection
+// This is used for struct types and other complex types
+func DeepCopy[T any](v *T) *T {
+	if v == nil {
+		return nil
+	}
+
+	// Use reflection to create a deep copy
+	original := reflect.ValueOf(v).Elem()
+	copied := reflect.New(original.Type()).Elem()
+
+	deepCopyValue(original, copied)
+
+	result := copied.Addr().Interface().(*T)
+	return result
+}
+
+// deepCopyValue recursively copies a reflect.Value
+func deepCopyValue(src, dst reflect.Value) {
+	switch src.Kind() {
+	case reflect.Ptr:
+		if src.IsNil() {
+			return
+		}
+		dst.Set(reflect.New(src.Elem().Type()))
+		deepCopyValue(src.Elem(), dst.Elem())
+
+	case reflect.Struct:
+		for i := 0; i < src.NumField(); i++ {
+			if dst.Field(i).CanSet() {
+				deepCopyValue(src.Field(i), dst.Field(i))
+			}
+		}
+
+	case reflect.Slice:
+		if src.IsNil() {
+			return
+		}
+		dst.Set(reflect.MakeSlice(src.Type(), src.Len(), src.Cap()))
+		for i := 0; i < src.Len(); i++ {
+			deepCopyValue(src.Index(i), dst.Index(i))
+		}
+
+	case reflect.Map:
+		if src.IsNil() {
+			return
+		}
+		dst.Set(reflect.MakeMap(src.Type()))
+		for _, key := range src.MapKeys() {
+			srcVal := src.MapIndex(key)
+			dstVal := reflect.New(srcVal.Type()).Elem()
+			deepCopyValue(srcVal, dstVal)
+			dst.SetMapIndex(key, dstVal)
+		}
+
+	case reflect.Array:
+		for i := 0; i < src.Len(); i++ {
+			deepCopyValue(src.Index(i), dst.Index(i))
+		}
+
+	default:
+		// For basic types, just set directly
+		if dst.CanSet() {
+			dst.Set(src)
+		}
+	}
 }
 
 // Free provides a hint to the garbage collector that memory can be freed

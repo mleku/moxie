@@ -18,7 +18,7 @@
         <br/>
         <p><b>Features:</b></p>
         <ul>
-            <li>Syntax highlighting for .mx files</li>
+            <li>Syntax highlighting for .x files</li>
             <li>File type recognition</li>
             <li>Color scheme customization</li>
             <li>Code folding support</li>
@@ -42,7 +42,7 @@
                   implementationClass="com.moxie.lang.MoxieFileType"
                   fieldName="INSTANCE"
                   language="Moxie"
-                  extensions="mx"/>
+                  extensions="x"/>
 
         <!-- Language -->
         <lang.parserDefinition language="Moxie"
