@@ -6,7 +6,8 @@
 package runtime
 
 import (
-	"runtime"
+	"fmt"
+	goruntime "runtime"
 	"unsafe"
 )
 
@@ -83,7 +84,7 @@ func Free[T any](p *T) {
 	*p = zero
 
 	// Trigger GC (this is aggressive, real implementation might be more subtle)
-	runtime.GC()
+	goruntime.GC()
 }
 
 // FreeSlice provides GC hint for slice memory
@@ -96,7 +97,7 @@ func FreeSlice[T any](s *[]T) {
 	*s = nil
 
 	// Trigger GC
-	runtime.GC()
+	goruntime.GC()
 }
 
 // FreeMap provides GC hint for map memory
@@ -109,7 +110,7 @@ func FreeMap[K comparable, V any](m *map[K]V) {
 	*m = nil
 
 	// Trigger GC
-	runtime.GC()
+	goruntime.GC()
 }
 
 // SizeOf returns the size in bytes of the value pointed to
@@ -119,4 +120,86 @@ func SizeOf[T any](v *T) int64 {
 		return 0
 	}
 	return int64(unsafe.Sizeof(*v))
+}
+
+// Concat concatenates two byte slices and returns a pointer to the result
+// Used for string concatenation: s1 + s2 -> Concat(s1, s2)
+func Concat(s1, s2 *[]byte) *[]byte {
+	if s1 == nil && s2 == nil {
+		empty := []byte{}
+		return &empty
+	}
+	if s1 == nil {
+		return s2
+	}
+	if s2 == nil {
+		return s1
+	}
+
+	result := append(*s1, *s2...)
+	return &result
+}
+
+// ConcatSlice concatenates two slices of any type and returns a pointer to the result
+// Used for array concatenation: a1 + a2 -> ConcatSlice[T](a1, a2)
+// Always allocates a new slice, never mutates operands
+func ConcatSlice[T any](s1, s2 *[]T) *[]T {
+	if s1 == nil && s2 == nil {
+		empty := []T{}
+		return &empty
+	}
+	if s1 == nil {
+		// Clone s2
+		result := make([]T, len(*s2))
+		copy(result, *s2)
+		return &result
+	}
+	if s2 == nil {
+		// Clone s1
+		result := make([]T, len(*s1))
+		copy(result, *s1)
+		return &result
+	}
+
+	// Concatenate - allocate new slice with exact size needed
+	result := make([]T, len(*s1)+len(*s2))
+	copy(result, *s1)
+	copy(result[len(*s1):], *s2)
+	return &result
+}
+
+// Print prints values to stdout, converting *[]byte to strings
+// This provides better output for Moxie strings than fmt.Println
+func Print(args ...any) {
+	converted := convertArgs(args...)
+	for i, arg := range converted {
+		fmt.Print(arg)
+		if i < len(converted)-1 {
+			fmt.Print(" ")
+		}
+	}
+	fmt.Println()
+}
+
+// Printf prints formatted output, converting *[]byte to strings
+func Printf(format *[]byte, args ...any) {
+	// Convert format string
+	var formatStr string
+	if format != nil {
+		formatStr = string(*format)
+	}
+	fmt.Printf(formatStr, convertArgs(args...)...)
+}
+
+// convertArgs converts *[]byte arguments to strings for printing
+func convertArgs(args ...any) []any {
+	result := make([]any, len(args))
+	for i, arg := range args {
+		if s, ok := arg.(*[]byte); ok && s != nil {
+			result[i] = string(*s)
+		} else {
+			result[i] = arg
+		}
+	}
+	return result
 }

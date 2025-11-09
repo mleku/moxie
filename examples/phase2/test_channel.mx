@@ -1,0 +1,21 @@
+package main
+
+import "fmt"
+
+func main() {
+	// Note: Channel pointer syntax &chan T{} requires parser modifications
+	// For now, use make() for channels (special case allowed)
+	ch1 := make(chan int)
+	go func() {
+		ch1 <- 42
+	}()
+	value := <-ch1
+	fmt.Printf("Received from unbuffered channel: %d\n", value)
+
+	// Buffered channel
+	ch2 := make(chan string, 2)
+	ch2 <- "Hello"
+	ch2 <- "World"
+	fmt.Printf("Sent to buffered channel: %s, %s\n", <-ch2, <-ch2)
+}
+

@@ -135,6 +135,11 @@ func buildCommand(args []string) error {
 		return fmt.Errorf("copying go.mod: %w", err)
 	}
 
+	// Copy runtime directory
+	if err := copyRuntimeDir(tmpDir); err != nil {
+		return fmt.Errorf("copying runtime: %w", err)
+	}
+
 	// Build with output name in temp dir
 	tmpBinary := filepath.Join(tmpDir, outputName)
 
@@ -187,6 +192,11 @@ func installCommand(args []string) error {
 		return fmt.Errorf("copying go.mod: %w", err)
 	}
 
+	// Copy runtime directory
+	if err := copyRuntimeDir(tmpDir); err != nil {
+		return fmt.Errorf("copying runtime: %w", err)
+	}
+
 	cmd := exec.Command("go", append([]string{"install"}, args...)...)
 	cmd.Dir = tmpDir
 	cmd.Stdout = os.Stdout
@@ -223,6 +233,11 @@ func runCommand(args []string) error {
 
 	if err := copyGoMod(srcDir, tmpDir); err != nil {
 		return fmt.Errorf("copying go.mod: %w", err)
+	}
+
+	// Copy runtime directory
+	if err := copyRuntimeDir(tmpDir); err != nil {
+		return fmt.Errorf("copying runtime: %w", err)
 	}
 
 	// Convert .mx file reference to .go for go run
@@ -265,6 +280,11 @@ func testCommand(args []string) error {
 
 	if err := copyGoMod(srcDir, tmpDir); err != nil {
 		return fmt.Errorf("copying go.mod: %w", err)
+	}
+
+	// Copy runtime directory
+	if err := copyRuntimeDir(tmpDir); err != nil {
+		return fmt.Errorf("copying runtime: %w", err)
 	}
 
 	cmd := exec.Command("go", append([]string{"test"}, args...)...)
@@ -471,6 +491,11 @@ func transformAST(file *ast.File) {
 
 // transformImportPath converts Moxie import paths to standard Go paths
 func transformImportPath(path string) string {
+	// Special case: Don't transform the runtime package import
+	if path == "github.com/mleku/moxie/runtime" {
+		return path
+	}
+
 	// Handle internal Moxie standard library paths
 	if strings.HasPrefix(path, moxieModule+"/") {
 		// github.com/mleku/moxie/internal/fmt -> fmt
@@ -495,12 +520,83 @@ func copyGoMod(srcDir, dstDir string) error {
 	dstMod := filepath.Join(dstDir, "go.mod")
 
 	if _, err := os.Stat(srcMod); os.IsNotExist(err) {
-		// No go.mod, create a basic one
-		content := fmt.Sprintf("module moxie-build\n\ngo 1.24\n")
+		// No go.mod, create a basic one with runtime module support
+		content := `module moxie-build
+
+go 1.24
+
+require github.com/mleku/moxie/runtime v0.0.0
+
+replace github.com/mleku/moxie/runtime => ./runtime
+`
 		return os.WriteFile(dstMod, []byte(content), 0644)
 	}
 
-	return copyFile(srcMod, dstMod)
+	// Copy existing go.mod and add runtime module if needed
+	content, err := os.ReadFile(srcMod)
+	if err != nil {
+		return err
+	}
+
+	// Check if runtime module is already present
+	contentStr := string(content)
+	if !strings.Contains(contentStr, "github.com/mleku/moxie/runtime") {
+		// Add runtime module (use relative path since we copy runtime to build dir)
+		contentStr += `
+
+require github.com/mleku/moxie/runtime v0.0.0
+
+replace github.com/mleku/moxie/runtime => ./runtime
+`
+	}
+
+	return os.WriteFile(dstMod, []byte(contentStr), 0644)
+}
+
+// copyRuntimeDir copies the runtime directory to the build directory
+func copyRuntimeDir(dstDir string) error {
+	// Get moxie executable path to find runtime directory
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	// Runtime is in the same directory as the moxie executable
+	// e.g., /path/to/moxie/moxie -> /path/to/moxie/runtime
+	moxieRoot := filepath.Dir(exePath)
+	runtimeSrc := filepath.Join(moxieRoot, "runtime")
+	runtimeDst := filepath.Join(dstDir, "runtime")
+
+	// Check if runtime directory exists
+	if _, err := os.Stat(runtimeSrc); os.IsNotExist(err) {
+		return fmt.Errorf("runtime directory not found at %s", runtimeSrc)
+	}
+
+	// Create destination runtime directory
+	if err := os.MkdirAll(runtimeDst, 0755); err != nil {
+		return err
+	}
+
+	// Copy all files from runtime directory
+	entries, err := os.ReadDir(runtimeSrc)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue // Skip subdirectories for now
+		}
+
+		srcFile := filepath.Join(runtimeSrc, entry.Name())
+		dstFile := filepath.Join(runtimeDst, entry.Name())
+
+		if err := copyFile(srcFile, dstFile); err != nil {
+			return fmt.Errorf("copying %s: %w", entry.Name(), err)
+		}
+	}
+
+	return nil
 }
 
 func copyFile(src, dst string) error {

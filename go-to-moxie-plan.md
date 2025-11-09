@@ -1,5 +1,19 @@
 # Go to Moxie Implementation Plan
 
+**NOTE**: This is the original comprehensive implementation plan. The actual implementation has focused on core language features first (see `IMPLEMENTATION-STATUS.md` for current status).
+
+**Actual Implementation Order**:
+- ✅ Phase 0: Foundation
+- ✅ Phase 1: Name Transformation (infrastructure complete, disabled by default)
+- ✅ Phase 2: Syntax Transformations (explicit pointers, runtime functions)
+- ✅ Phase 3: String Mutability (string = *[]byte)
+- ✅ Phase 4: Array Concatenation (+ operator for slices)
+- ⏳ Phase 5+: Additional features (see IMPLEMENTATION-STATUS.md)
+
+---
+
+## Original Plan
+
 A comprehensive plan for implementing Moxie features as a transpiler to Go, organized in strict dependency order.
 
 ## Phase 0: Foundation (COMPLETED ✅)
