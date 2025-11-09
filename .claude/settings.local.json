@@ -82,7 +82,15 @@
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go get:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go mod:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go test:*)",
-      "Bash(./moxie:*)"
+      "Bash(./moxie:*)",
+      "Bash(java -version:*)",
+      "Bash(apt-cache search:*)",
+      "Bash(export JAVA_HOME=~/tools/jdk-21.0.1:*)",
+      "Bash(export PATH=$JAVA_HOME/bin:$PATH)",
+      "Bash(curl:*)",
+      "Bash(export JAVA_HOME=/home/mleku/tools/jdk-21.0.1:*)",
+      "Bash(./gradlew buildPlugin:*)",
+      "Bash(./gradlew clean:*)"
     ],
     "deny": [],
     "ask": []
