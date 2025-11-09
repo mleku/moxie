@@ -135,6 +135,11 @@ func buildCommand(args []string) error {
 		return fmt.Errorf("copying go.mod: %w", err)
 	}
 
+	// Copy go.sum to ensure dependencies are resolved
+	if err := copyGoSum(srcDir, tmpDir); err != nil {
+		return fmt.Errorf("copying go.sum: %w", err)
+	}
+
 	// Copy runtime directory
 	if err := copyRuntimeDir(tmpDir); err != nil {
 		return fmt.Errorf("copying runtime: %w", err)
@@ -190,6 +195,11 @@ func installCommand(args []string) error {
 
 	if err := copyGoMod(srcDir, tmpDir); err != nil {
 		return fmt.Errorf("copying go.mod: %w", err)
+	}
+
+	// Copy go.sum to ensure dependencies are resolved
+	if err := copyGoSum(srcDir, tmpDir); err != nil {
+		return fmt.Errorf("copying go.sum: %w", err)
 	}
 
 	// Copy runtime directory
@@ -377,6 +387,17 @@ func transpileFile(src, dst string) error {
 
 // transformAST transforms the AST from Moxie to standard Go
 func transformAST(file *ast.File) {
+	// Phase 0: Check const enforcement (compile-time immutability)
+	constChecker := NewConstChecker()
+	if constErrors := constChecker.Check(file); len(constErrors) > 0 {
+		fmt.Fprintf(os.Stderr, "const enforcement errors:\n")
+		for _, err := range constErrors {
+			fmt.Fprintf(os.Stderr, "  %v\n", err)
+		}
+		// For now, print warnings but continue
+		// TODO: Make this a hard error in the future
+	}
+
 	// Phase 2: Apply syntax transformations (Moxie-specific syntax to Go)
 	syntaxTx := NewSyntaxTransformer()
 	if err := syntaxTx.Transform(file); err != nil {
@@ -551,6 +572,37 @@ replace github.com/mleku/moxie/runtime => ./runtime
 	}
 
 	return os.WriteFile(dstMod, []byte(contentStr), 0644)
+}
+
+// copyGoSum copies go.sum from source to destination directory
+// This ensures transitive dependencies (like purego) are properly resolved
+func copyGoSum(srcDir, dstDir string) error {
+	// First, try to copy from the source directory
+	srcSum := filepath.Join(srcDir, "go.sum")
+	dstSum := filepath.Join(dstDir, "go.sum")
+
+	if _, err := os.Stat(srcSum); err == nil {
+		// Source has go.sum, copy it
+		return copyFile(srcSum, dstSum)
+	}
+
+	// If source doesn't have go.sum, try to get it from the moxie project root
+	// Get moxie executable path to find project root
+	exePath, err := os.Executable()
+	if err != nil {
+		return nil // Don't fail if we can't find it
+	}
+
+	moxieRoot := filepath.Dir(exePath)
+	projectSum := filepath.Join(moxieRoot, "go.sum")
+
+	if _, err := os.Stat(projectSum); err == nil {
+		// Project root has go.sum, copy it
+		return copyFile(projectSum, dstSum)
+	}
+
+	// No go.sum found, that's okay - go will generate one
+	return nil
 }
 
 // copyRuntimeDir copies the runtime directory to the build directory

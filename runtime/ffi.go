@@ -58,13 +58,9 @@ func Dlsym[T any](lib *DLib, name *[]byte) T {
 	goName := string(*name)
 
 	// Use purego to register the library function
-	// This is a bit tricky because purego.RegisterLibFunc expects a pointer to a function variable
+	// Note: purego.RegisterLibFunc modifies fn in-place and doesn't return an error
 	var fn T
-	err := purego.RegisterLibFunc(&fn, lib.handle, goName)
-	if err != nil {
-		lastError = err.Error()
-		return zero
-	}
+	purego.RegisterLibFunc(&fn, lib.handle, goName)
 
 	return fn
 }

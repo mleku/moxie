@@ -8,6 +8,7 @@ package runtime
 import (
 	"fmt"
 	goruntime "runtime"
+	"strconv"
 	"unsafe"
 )
 
@@ -202,4 +203,66 @@ func convertArgs(args ...any) []any {
 		}
 	}
 	return result
+}
+
+// String conversion functions for Moxie type conversions
+
+// IntToString converts an integer to a Moxie string (*[]byte)
+// Used for string(intValue) conversions
+func IntToString(n int) *[]byte {
+	s := strconv.Itoa(n)
+	b := []byte(s)
+	return &b
+}
+
+// Int64ToString converts an int64 to a Moxie string (*[]byte)
+func Int64ToString(n int64) *[]byte {
+	s := strconv.FormatInt(n, 10)
+	b := []byte(s)
+	return &b
+}
+
+// Int32ToString converts an int32 to a Moxie string (*[]byte)
+func Int32ToString(n int32) *[]byte {
+	s := strconv.FormatInt(int64(n), 10)
+	b := []byte(s)
+	return &b
+}
+
+// RuneToString converts a rune to a Moxie string (*[]byte)
+// Used for string(runeValue) conversions
+func RuneToString(r rune) *[]byte {
+	s := string(r)
+	b := []byte(s)
+	return &b
+}
+
+// RunesToString converts a rune slice to a Moxie string (*[]byte)
+// Used for string(*[]rune) conversions
+func RunesToString(runes *[]rune) *[]byte {
+	if runes == nil {
+		return &[]byte{}
+	}
+	s := string(*runes)
+	b := []byte(s)
+	return &b
+}
+
+// StringToRunes converts a Moxie string (*[]byte) to a rune slice (*[]rune)
+// Used for []rune(string) or *[]rune(string) conversions
+func StringToRunes(s *[]byte) *[]rune {
+	if s == nil {
+		return &[]rune{}
+	}
+	r := []rune(string(*s))
+	return &r
+}
+
+// BytesToString converts a byte slice to a Moxie string (*[]byte)
+// This is essentially an identity conversion since Moxie strings are *[]byte
+func BytesToString(b *[]byte) *[]byte {
+	if b == nil {
+		return &[]byte{}
+	}
+	return b
 }

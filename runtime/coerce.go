@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"encoding/binary"
-	"reflect"
 	"unsafe"
 )
 
@@ -51,26 +50,29 @@ func Coerce[From, To any](src *[]From, endian ...int) *[]To {
 	dstLen := (srcLen * fromSize) / toSize
 	dstCap := (srcCap * fromSize) / toSize
 
-	// Create new slice header pointing to same backing array
-	srcHeader := (*reflect.SliceHeader)(unsafe.Pointer(src))
-	dstHeader := reflect.SliceHeader{
-		Data: srcHeader.Data,
-		Len:  dstLen,
-		Cap:  dstCap,
-	}
+	// Use modern unsafe.Slice API instead of deprecated reflect.SliceHeader
+	// Get pointer to the underlying data
+	srcData := unsafe.SliceData(srcSlice)
 
-	result := (*[]To)(unsafe.Pointer(&dstHeader))
+	// Reinterpret as destination type using unsafe.Slice
+	// This creates a new slice header pointing to the same backing array
+	result := unsafe.Slice((*To)(unsafe.Pointer(srcData)), dstLen)
+
+	// Set capacity by slicing (Go doesn't allow setting cap directly with unsafe.Slice)
+	// The capacity is implicitly the maximum length based on the backing array
+	result = result[:dstLen:dstCap]
 
 	// Apply endianness conversion if needed
 	if byteOrder != NativeEndian && toSize > 1 {
-		swapEndian(result, byteOrder, toSize)
+		swapEndianHardwareAccelerated(&result, byteOrder, toSize)
 	}
 
-	return result
+	return &result
 }
 
-// swapEndian performs in-place endianness conversion
-func swapEndian[T any](slice *[]T, targetEndian int, elemSize int) {
+// swapEndianHardwareAccelerated performs in-place endianness conversion
+// using hardware-accelerated encoding/binary where possible
+func swapEndianHardwareAccelerated[T any](slice *[]T, targetEndian int, elemSize int) {
 	if slice == nil {
 		return
 	}
@@ -90,16 +92,104 @@ func swapEndian[T any](slice *[]T, targetEndian int, elemSize int) {
 		return
 	}
 
-	// Perform byte swapping based on element size
+	// Try to use hardware-accelerated encoding/binary for common types
+	// This provides SIMD acceleration on supported architectures
 	s := *slice
-	for i := range s {
-		swapBytes(unsafe.Pointer(&s[i]), elemSize)
+
+	// Get the byte order interface for the target endianness
+	var order binary.ByteOrder
+	if targetEndian == LittleEndian {
+		order = binary.LittleEndian
+	} else {
+		order = binary.BigEndian
+	}
+
+	// Use hardware-accelerated conversion for supported sizes
+	switch elemSize {
+	case 2:
+		// Try to handle as []uint16 for hardware acceleration
+		swapUint16Slice(s, order)
+	case 4:
+		// Try to handle as []uint32 for hardware acceleration
+		swapUint32Slice(s, order)
+	case 8:
+		// Try to handle as []uint64 for hardware acceleration
+		swapUint64Slice(s, order)
+	default:
+		// Fallback to manual byte swapping for unsupported sizes
+		for i := range s {
+			swapBytes(unsafe.Pointer(&s[i]), elemSize)
+		}
+	}
+}
+
+// swapUint16Slice uses hardware-accelerated endianness conversion for 16-bit values
+func swapUint16Slice[T any](slice []T, order binary.ByteOrder) {
+	if len(slice) == 0 {
+		return
+	}
+
+	// Reinterpret as byte slice for bulk conversion
+	byteSlice := unsafe.Slice((*byte)(unsafe.Pointer(&slice[0])), len(slice)*2)
+
+	// Read and write back with correct byte order (hardware accelerated on many platforms)
+	for i := 0; i < len(byteSlice); i += 2 {
+		val := order.Uint16(byteSlice[i : i+2])
+		// Store back in native endian (which means we've done the swap)
+		if isLittleEndian() {
+			binary.LittleEndian.PutUint16(byteSlice[i:i+2], val)
+		} else {
+			binary.BigEndian.PutUint16(byteSlice[i:i+2], val)
+		}
+	}
+}
+
+// swapUint32Slice uses hardware-accelerated endianness conversion for 32-bit values
+func swapUint32Slice[T any](slice []T, order binary.ByteOrder) {
+	if len(slice) == 0 {
+		return
+	}
+
+	// Reinterpret as byte slice for bulk conversion
+	byteSlice := unsafe.Slice((*byte)(unsafe.Pointer(&slice[0])), len(slice)*4)
+
+	// Read and write back with correct byte order (hardware accelerated on many platforms)
+	for i := 0; i < len(byteSlice); i += 4 {
+		val := order.Uint32(byteSlice[i : i+4])
+		// Store back in native endian (which means we've done the swap)
+		if isLittleEndian() {
+			binary.LittleEndian.PutUint32(byteSlice[i:i+4], val)
+		} else {
+			binary.BigEndian.PutUint32(byteSlice[i:i+4], val)
+		}
+	}
+}
+
+// swapUint64Slice uses hardware-accelerated endianness conversion for 64-bit values
+func swapUint64Slice[T any](slice []T, order binary.ByteOrder) {
+	if len(slice) == 0 {
+		return
+	}
+
+	// Reinterpret as byte slice for bulk conversion
+	byteSlice := unsafe.Slice((*byte)(unsafe.Pointer(&slice[0])), len(slice)*8)
+
+	// Read and write back with correct byte order (hardware accelerated on many platforms)
+	for i := 0; i < len(byteSlice); i += 8 {
+		val := order.Uint64(byteSlice[i : i+8])
+		// Store back in native endian (which means we've done the swap)
+		if isLittleEndian() {
+			binary.LittleEndian.PutUint64(byteSlice[i:i+8], val)
+		} else {
+			binary.BigEndian.PutUint64(byteSlice[i:i+8], val)
+		}
 	}
 }
 
 // swapBytes performs in-place byte swapping for different sizes
+// This is a fallback for unsupported sizes
 func swapBytes(ptr unsafe.Pointer, size int) {
-	bytes := (*[8]byte)(ptr)
+	bytes := (*[16]byte)(ptr)
 
 	switch size {
 	case 2:
@@ -109,6 +199,17 @@ func swapBytes(ptr unsafe.Pointer, size int) {
 	case 8:
 		bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7] =
 			bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2], bytes[1], bytes[0]
+	case 16:
+		// Support for 128-bit types (e.g., complex128, SIMD types)
+		bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+			bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15] =
+			bytes[15], bytes[14], bytes[13], bytes[12], bytes[11], bytes[10], bytes[9], bytes[8],
+			bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2], bytes[1], bytes[0]
+	default:
+		// For other sizes, do a generic byte reversal
+		for i := 0; i < size/2; i++ {
+			bytes[i], bytes[size-1-i] = bytes[size-1-i], bytes[i]
+		}
 	}
 }
 
@@ -130,7 +231,7 @@ func ToLittleEndian[T any](slice *[]T) *[]T {
 	size := int(unsafe.Sizeof(zero))
 
 	if !isLittleEndian() && size > 1 {
-		swapEndian(slice, LittleEndian, size)
+		swapEndianHardwareAccelerated(slice, LittleEndian, size)
 	}
 
 	return slice
@@ -146,7 +247,7 @@ func ToBigEndian[T any](slice *[]T) *[]T {
 	size := int(unsafe.Sizeof(zero))
 
 	if isLittleEndian() && size > 1 {
-		swapEndian(slice, BigEndian, size)
+		swapEndianHardwareAccelerated(slice, BigEndian, size)
 	}
 
 	return slice

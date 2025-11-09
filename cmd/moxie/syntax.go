@@ -172,6 +172,12 @@ func (st *SyntaxTransformer) transformStringLiteralsInReturn(node *ast.ReturnStm
 
 // transformStringLiteralsInCall transforms string literals in function call arguments
 func (st *SyntaxTransformer) transformStringLiteralsInCall(node *ast.CallExpr) {
+	// Skip string transformations for fmt package functions
+	// fmt functions expect Go strings, not *[]byte
+	if st.isFmtFunction(node) {
+		return
+	}
+
 	for i, arg := range node.Args {
 		if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.STRING {
 			if replacement := st.tryTransformStringLiteral(lit); replacement != nil {
@@ -179,6 +185,16 @@ func (st *SyntaxTransformer) transformStringLiteralsInCall(node *ast.CallExpr) {
 			}
 		}
 	}
+}
+
+// isFmtFunction checks if a call expression is calling a fmt package function
+func (st *SyntaxTransformer) isFmtFunction(node *ast.CallExpr) bool {
+	if sel, ok := node.Fun.(*ast.SelectorExpr); ok {
+		if ident, ok := sel.X.(*ast.Ident); ok {
+			return ident.Name == "fmt"
+		}
+	}
+	return false
 }
 
 // transformBinaryExpr handles binary expression transformations
@@ -538,7 +554,22 @@ func (st *SyntaxTransformer) transformCallExpr(node *ast.CallExpr) {
 			// dlerror() is a Moxie FFI built-in
 			// Transform: dlerror() -> moxie.Dlerror()
 			st.transformToRuntimeCall(node, "Dlerror")
+
+		case "string":
+			// string() type conversion
+			// Transform based on argument type:
+			// string(int) -> moxie.IntToString(int)
+			// string(rune) -> moxie.RuneToString(rune)
+			// string(*[]rune) -> moxie.RunesToString(*[]rune)
+			if len(node.Args) > 0 {
+				st.transformStringConversion(node)
+			}
 		}
+	}
+
+	// Check for []rune(string) or *[]rune(string) conversions
+	if st.isRuneSliceConversion(node) {
+		st.transformRuneSliceConversion(node)
 	}
 }
 
@@ -1067,4 +1098,101 @@ func (st *SyntaxTransformer) tryTransformTypeCoercion(call *ast.CallExpr) ast.Ex
 
 	st.needsRuntimeImport = true
 	return coerceCall
+}
+
+// transformStringConversion transforms string(x) to appropriate runtime function
+// based on the type of x
+func (st *SyntaxTransformer) transformStringConversion(node *ast.CallExpr) {
+	if len(node.Args) == 0 {
+		return
+	}
+
+	arg := node.Args[0]
+
+	// Try to infer the type from the expression
+	// This is a best-effort heuristic without full type checking
+
+	// Check for numeric literals
+	if lit, ok := arg.(*ast.BasicLit); ok {
+		switch lit.Kind {
+		case token.INT:
+			// string(42) -> moxie.IntToString(42)
+			st.transformToRuntimeCallWithArgs(node, "IntToString", node.Args)
+			return
+		case token.CHAR:
+			// string('A') -> moxie.RuneToString('A')
+			st.transformToRuntimeCallWithArgs(node, "RuneToString", node.Args)
+			return
+		}
+	}
+
+	// Check for star expressions (pointer dereference or address)
+	if _, ok := arg.(*ast.StarExpr); ok {
+		// Likely *[]rune -> string
+		// string(*runeSlice) -> moxie.RunesToString(runeSlice)
+		st.transformToRuntimeCallWithArgs(node, "RunesToString", node.Args)
+		return
+	}
+
+	// Check for identifiers - try to guess based on name patterns
+	if ident, ok := arg.(*ast.Ident); ok {
+		name := ident.Name
+		// Common rune/int32 variable names
+		if name == "r" || name == "ch" || name == "c" {
+			st.transformToRuntimeCallWithArgs(node, "RuneToString", node.Args)
+			return
+		}
+		// If the variable ends with "Runes" or "runes", it's likely a rune slice
+		if len(name) > 5 && (name[len(name)-5:] == "Runes" || name[len(name)-5:] == "runes") {
+			st.transformToRuntimeCallWithArgs(node, "RunesToString", node.Args)
+			return
+		}
+	}
+
+	// Default: assume int conversion (most common case)
+	// string(n) -> moxie.IntToString(n)
+	st.transformToRuntimeCallWithArgs(node, "IntToString", node.Args)
+}
+
+// isRuneSliceConversion checks if a CallExpr is []rune(x) or *[]rune(x)
+func (st *SyntaxTransformer) isRuneSliceConversion(node *ast.CallExpr) bool {
+	// Check for []rune(x)
+	if arrType, ok := node.Fun.(*ast.ArrayType); ok {
+		if ident, ok := arrType.Elt.(*ast.Ident); ok && ident.Name == "rune" {
+			return true
+		}
+	}
+
+	// Check for *[]rune(x)
+	if starExpr, ok := node.Fun.(*ast.StarExpr); ok {
+		if arrType, ok := starExpr.X.(*ast.ArrayType); ok {
+			if ident, ok := arrType.Elt.(*ast.Ident); ok && ident.Name == "rune" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// transformRuneSliceConversion transforms []rune(s) or *[]rune(s) to moxie.StringToRunes(s)
+func (st *SyntaxTransformer) transformRuneSliceConversion(node *ast.CallExpr) {
+	if len(node.Args) == 0 {
+		return
+	}
+
+	// Transform: []rune(s) -> moxie.StringToRunes(s)
+	// Transform: *[]rune(s) -> moxie.StringToRunes(s)
+	st.transformToRuntimeCallWithArgs(node, "StringToRunes", node.Args)
+}
+
+// transformToRuntimeCallWithArgs is a helper that transforms a CallExpr to call a moxie runtime function
+// with explicit arguments (used for conversions)
+func (st *SyntaxTransformer) transformToRuntimeCallWithArgs(node *ast.CallExpr, runtimeFunc string, args []ast.Expr) {
+	node.Fun = &ast.SelectorExpr{
+		X:   &ast.Ident{Name: "moxie"},
+		Sel: &ast.Ident{Name: runtimeFunc},
+	}
+	node.Args = args
+	st.needsRuntimeImport = true
 }

@@ -70,7 +70,19 @@
       "Bash(/home/mleku/go/bin/go version:*)",
       "Bash(GOROOT=/home/mleku/go /home/mleku/go/bin/go download:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go version:*)",
-      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local ./moxie run:*)"
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local ./moxie run:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go build:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local ./moxie build:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go run:*)",
+      "Bash(for test in examples/phase6/*.mx)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local timeout:*)",
+      "Bash(export GOROOT=/home/mleku/go GOTOOLCHAIN=local)",
+      "Bash(timeout 5 ./moxie run:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go mod download:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go get:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go mod:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local go test:*)",
+      "Bash(./moxie:*)"
     ],
     "deny": [],
     "ask": []

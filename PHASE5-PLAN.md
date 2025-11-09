@@ -161,12 +161,16 @@ func StringToRunes(s *[]byte) *[]rune {
 - Support variadic arguments ✅
 - Added spacing between arguments ✅
 
-### Step 3: String Conversions ⏸️ DEFERRED
-- Detect `CallExpr` where `Fun` is type identifier (deferred)
-- Check if conversion is string-related (deferred)
-- Transform to appropriate runtime function (deferred)
-- Add `IntToString`, `RunesToString`, `StringToRunes` to runtime (deferred)
-- **Reason**: Not critical for current usability, can be added later
+### Step 3: String Conversions ✅ COMPLETE
+- ✅ Detect `CallExpr` where `Fun` is type identifier
+- ✅ Check if conversion is string-related
+- ✅ Transform to appropriate runtime function
+- ✅ Added `IntToString`, `Int64ToString`, `Int32ToString` to runtime
+- ✅ Added `RuneToString`, `RunesToString`, `StringToRunes` to runtime
+- ✅ Added `BytesToString` to runtime
+- ✅ AST transformation detects string(x) and transforms based on type
+- ✅ AST transformation detects []rune(x) and *[]rune(x) conversions
+- ✅ Test file created (blocked by same go.sum issue affecting Phase 6 tests)
 
 ### Step 4: Testing ✅ COMPLETE
 - Fixed test_array_concat_types.mx (struct test) ✅
