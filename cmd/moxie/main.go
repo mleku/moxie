@@ -95,6 +95,7 @@ func buildCommand(args []string) error {
 
 	// Determine source directory and output binary name
 	srcDir := "."
+	srcArg := "." // Track the original source argument to skip it in build args
 	outputName := ""
 	skipNext := false
 
@@ -108,26 +109,58 @@ func buildCommand(args []string) error {
 			outputName = args[i+1]
 			skipNext = true
 		} else if !strings.HasPrefix(args[i], "-") && srcDir == "." {
+			srcArg = args[i]
 			srcDir = args[i]
 		}
 	}
 
-	// If no -o flag, determine output name from source directory
-	if outputName == "" {
-		if srcDir == "." {
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			outputName = filepath.Base(cwd)
-		} else {
-			outputName = filepath.Base(srcDir)
-		}
+	// Check if srcDir is actually a file
+	srcInfo, err := os.Stat(srcDir)
+	if err != nil {
+		return fmt.Errorf("checking source: %w", err)
 	}
 
-	// Transpile source code
-	if err := transpileTree(srcDir, tmpDir); err != nil {
-		return fmt.Errorf("transpiling: %w", err)
+	if !srcInfo.IsDir() {
+		// srcDir is a file, extract directory and use file-specific logic
+		srcFile := srcDir
+		srcDir = filepath.Dir(srcFile)
+
+		// If no -o flag, use file base name without extension
+		if outputName == "" {
+			baseName := filepath.Base(srcFile)
+			ext := filepath.Ext(baseName)
+			outputName = baseName[:len(baseName)-len(ext)]
+		}
+
+		// Transpile single file directly to tmpDir (flatten structure)
+		baseName := filepath.Base(srcFile)
+		dstPath := filepath.Join(tmpDir, baseName)
+		if filepath.Ext(dstPath) == ".mx" {
+			dstPath = dstPath[:len(dstPath)-3] + ".go"
+		}
+
+		// Transpile the file
+		if err := transpileFile(srcFile, dstPath); err != nil {
+			return fmt.Errorf("transpiling %s: %w", srcFile, err)
+		}
+	} else {
+		// If no -o flag, determine output name from source directory
+		if outputName == "" {
+			if srcDir == "." {
+				cwd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+				outputName = filepath.Base(cwd)
+			} else {
+				outputName = filepath.Base(srcDir)
+			}
+		}
+
+		// Transpile source code tree
+		if err := transpileTree(srcDir, tmpDir); err != nil {
+			return fmt.Errorf("transpiling: %w", err)
+		}
 	}
 
 	// Copy go.mod if it exists
@@ -151,8 +184,8 @@ func buildCommand(args []string) error {
 	// Filter out the package path from args since we transpiled to tmpDir root
 	buildArgs := []string{"build", "-o", tmpBinary}
 	for _, arg := range args {
-		// Skip the source directory argument
-		if arg == srcDir {
+		// Skip the source argument (file or directory)
+		if arg == srcArg {
 			continue
 		}
 		buildArgs = append(buildArgs, arg)
@@ -245,6 +278,11 @@ func runCommand(args []string) error {
 		return fmt.Errorf("copying go.mod: %w", err)
 	}
 
+	// Copy go.sum to ensure dependencies are resolved
+	if err := copyGoSum(srcDir, tmpDir); err != nil {
+		return fmt.Errorf("copying go.sum: %w", err)
+	}
+
 	// Copy runtime directory
 	if err := copyRuntimeDir(tmpDir); err != nil {
 		return fmt.Errorf("copying runtime: %w", err)
@@ -290,6 +328,11 @@ func testCommand(args []string) error {
 
 	if err := copyGoMod(srcDir, tmpDir); err != nil {
 		return fmt.Errorf("copying go.mod: %w", err)
+	}
+
+	// Copy go.sum to ensure dependencies are resolved
+	if err := copyGoSum(srcDir, tmpDir); err != nil {
+		return fmt.Errorf("copying go.sum: %w", err)
 	}
 
 	// Copy runtime directory
@@ -360,11 +403,22 @@ func transpileTree(srcDir, dstDir string) error {
 
 // transpileFile transpiles a single Go file to standard Go
 func transpileFile(src, dst string) error {
-	// Parse the source file
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, src, nil, parser.ParseComments)
+	// Read source file
+	sourceBytes, err := os.ReadFile(src)
 	if err != nil {
-		return fmt.Errorf("parsing %s: %w", src, err)
+		return fmt.Errorf("reading %s: %w", src, err)
+	}
+
+	// Preprocess Moxie syntax (e.g., &chan T{} literals)
+	preprocessed := preprocessMoxieSyntax(string(sourceBytes))
+
+	// Parse the preprocessed source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, src, preprocessed, parser.ParseComments)
+	if err != nil {
+		// Post-process error message to show original Moxie syntax
+		errMsg := postprocessMoxieSyntax(err.Error())
+		return fmt.Errorf("parsing %s: %s", src, errMsg)
 	}
 
 	// Transform the AST

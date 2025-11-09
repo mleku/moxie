@@ -90,7 +90,9 @@
       "Bash(curl:*)",
       "Bash(export JAVA_HOME=/home/mleku/tools/jdk-21.0.1:*)",
       "Bash(./gradlew buildPlugin:*)",
-      "Bash(./gradlew clean:*)"
+      "Bash(./gradlew clean:*)",
+      "Bash(export GOROOT=/home/mleku/go)",
+      "Bash(./test_channel_literal)"
     ],
     "deny": [],
     "ask": []

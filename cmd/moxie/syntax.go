@@ -573,7 +573,7 @@ func (st *SyntaxTransformer) transformCallExpr(node *ast.CallExpr) {
 	}
 }
 
-// tryTransformChannelLiteral checks if a UnaryExpr is &chan T{} and returns replacement node
+// tryTransformChannelLiteral checks if a UnaryExpr is &__MoxieChan[T]{} and returns replacement node
 // Returns nil if no transformation needed
 func (st *SyntaxTransformer) tryTransformChannelLiteral(node *ast.UnaryExpr) ast.Expr {
 	if node.Op != token.AND {
@@ -586,32 +586,56 @@ func (st *SyntaxTransformer) tryTransformChannelLiteral(node *ast.UnaryExpr) ast
 		return nil
 	}
 
-	// Check if it's a channel type
-	chanType, ok := compLit.Type.(*ast.ChanType)
-	if !ok {
+	// Check if the composite literal type is __MoxieChan[T], __MoxieChanSend[T], or __MoxieChanRecv[T]
+	// This will be an IndexExpr: __MoxieChan[T] or IndexListExpr for multiple type params
+	var chanType *ast.ChanType
+	var markerName string
+
+	switch typ := compLit.Type.(type) {
+	case *ast.IndexExpr:
+		// __MoxieChan[T] or similar
+		if ident, ok := typ.X.(*ast.Ident); ok {
+			markerName = ident.Name
+			switch markerName {
+			case "__MoxieChan":
+				// Bidirectional channel: chan T
+				chanType = &ast.ChanType{
+					Dir:   ast.SEND | ast.RECV,
+					Value: typ.Index,
+				}
+			case "__MoxieChanSend":
+				// Send-only channel: chan<- T
+				chanType = &ast.ChanType{
+					Dir:   ast.SEND,
+					Value: typ.Index,
+				}
+			case "__MoxieChanRecv":
+				// Receive-only channel: <-chan T
+				chanType = &ast.ChanType{
+					Dir:   ast.RECV,
+					Value: typ.Index,
+				}
+			default:
+				return nil // Not a Moxie channel marker
+			}
+		}
+	case *ast.ChanType:
+		// Old-style direct channel type (shouldn't happen with preprocessor, but handle it)
+		chanType = typ
+	default:
 		return nil
 	}
 
-	// This is &chan T{...} which needs transformation
-	// Extract capacity from composite literal
-	// &chan int{cap: 10} has Elts containing KeyValueExpr with Key="cap" and Value=10
-	capacity := &ast.BasicLit{
-		Kind:  token.INT,
-		Value: "0", // Default unbuffered
+	if chanType == nil {
+		return nil
 	}
 
-	for _, elt := range compLit.Elts {
-		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			if ident, ok := kv.Key.(*ast.Ident); ok && ident.Name == "cap" {
-				if basicLit, ok := kv.Value.(*ast.BasicLit); ok {
-					capacity = basicLit
-				}
-				break
-			}
-		}
-	}
+	// This is &__MoxieChan[T]{...} which needs transformation
+	// Channel literal has one anonymous int64 field for buffer count
+	// &chan int{} → make(chan int) - unbuffered
+	// &chan int{10} → make(chan int, 10) - buffered with capacity 10
 
-	// Transform to make(chan T, capacity)
+	// Transform to make(chan T) or make(chan T, capacity)
 	makeCall := &ast.CallExpr{
 		Fun: &ast.Ident{Name: "make"},
 		Args: []ast.Expr{
@@ -619,12 +643,21 @@ func (st *SyntaxTransformer) tryTransformChannelLiteral(node *ast.UnaryExpr) ast
 		},
 	}
 
-	// Add capacity if non-zero
-	if capacity.Value != "0" {
-		makeCall.Args = append(makeCall.Args, capacity)
+	// Check if there's an anonymous element (buffer count)
+	if len(compLit.Elts) > 0 {
+		// First element is the buffer count (anonymous int64 field)
+		capacity := compLit.Elts[0]
+
+		// Only add capacity if it's not literally 0
+		if basicLit, ok := capacity.(*ast.BasicLit); ok && basicLit.Value == "0" {
+			// Skip - unbuffered channel
+		} else {
+			// Add capacity argument (could be literal or expression)
+			makeCall.Args = append(makeCall.Args, capacity)
+		}
 	}
 
-	// Return the make() call to replace &chan T{}
+	// Return the make() call to replace &__MoxieChan[T]{}
 	return makeCall
 }
 
