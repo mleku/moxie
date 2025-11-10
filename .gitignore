@@ -105,6 +105,11 @@ cmd/benchmark/data
 !app/web/dist/*.svg
 !*.x
 !*.svg
+!*.interp
+!*.tokens
+!*.g4
+!*.kts
+!*.properties
 # ...even if they are in subdirectories
 !*/
 /blocklist.json

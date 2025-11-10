@@ -33,7 +33,13 @@
       "Bash(/dev/null)",
       "Bash(done)",
       "Bash(go mod tidy:*)",
-      "Bash(/home/mleku/src/github.com/mleku/moxie/moxie build:*)"
+      "Bash(/home/mleku/src/github.com/mleku/moxie/moxie build:*)",
+      "WebSearch",
+      "Bash(java -version:*)",
+      "Bash(/home/mleku/tools/jdk-21.0.1/bin/java:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go mod init:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go get:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go test:*)"
     ],
     "deny": [],
     "ask": []
