@@ -126,6 +126,12 @@ func (st *SyntaxTransformer) Transform(file *ast.File) error {
 				}
 			case *ast.CallExpr:
 				if pass == 0 {
+					// Try to transform endianness markers first
+					if replacement := st.tryTransformEndiannessCoercion(n); replacement != nil {
+						cursor.Replace(replacement)
+						changed = true
+						return true
+					}
 					st.transformCallExpr(n)
 					st.transformStringLiteralsInCall(n)
 					// Try to transform type coercion (e.g., (*[]uint32)(bytes))
@@ -381,6 +387,13 @@ func (st *SyntaxTransformer) extractSliceElementType(expr ast.Expr) ast.Expr {
 		// Check for moxie.ConcatSlice[T](...) - extract T
 		if indexExpr, ok := e.Fun.(*ast.IndexExpr); ok {
 			return indexExpr.Index
+		}
+	case *ast.Ident:
+		// Variable - look up type in TypeTracker
+		varType := st.typeTracker.GetType(e.Name)
+		if varType != nil {
+			// Extract element type from the slice type
+			return st.typeTracker.extractElementType(varType)
 		}
 	}
 	return nil
@@ -1156,6 +1169,79 @@ func (st *SyntaxTransformer) tryTransformTypeCoercion(call *ast.CallExpr) ast.Ex
 	// Add endianness argument if present
 	if endianExpr != nil {
 		coerceCall.Args = append(coerceCall.Args, endianExpr)
+	}
+
+	st.needsRuntimeImport = true
+	return coerceCall
+}
+
+// tryTransformEndiannessCoercion transforms endianness marker calls to Coerce with endianness
+// Detects: __MoxieCoerceLE[T](expr) or __MoxieCoerceBE[T](expr)
+// Transforms to: moxie.Coerce[byte, T](expr, LittleEndian) or moxie.Coerce[byte, T](expr, BigEndian)
+func (st *SyntaxTransformer) tryTransformEndiannessCoercion(call *ast.CallExpr) ast.Expr {
+	// Check if this is a call to one of our endianness marker functions
+	// The Fun should be an IndexExpr with X being an Ident
+	indexExpr, ok := call.Fun.(*ast.IndexExpr)
+	if !ok {
+		return nil
+	}
+
+	ident, ok := indexExpr.X.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	// Check if it's one of our markers
+	var endianness string
+	switch ident.Name {
+	case "__MoxieCoerceLE":
+		endianness = "LittleEndian"
+	case "__MoxieCoerceBE":
+		endianness = "BigEndian"
+	default:
+		return nil // Not an endianness marker
+	}
+
+	// Extract the target element type from the index
+	targetElemType := indexExpr.Index
+
+	// Get the source expression (should be the first argument)
+	if len(call.Args) == 0 {
+		return nil
+	}
+	sourceExpr := call.Args[0]
+
+	// Infer source element type from the source expression
+	// For now, assume byte (most common case for endianness conversion)
+	var sourceElemType ast.Expr = &ast.Ident{Name: "byte"}
+
+	// Try to infer a better source type if possible
+	if inferredType := st.typeTracker.inferTypeFromExpr(sourceExpr); inferredType != nil {
+		elemType := st.typeTracker.extractElementType(inferredType)
+		if elemType != nil {
+			sourceElemType = elemType
+		}
+	}
+
+	// Build: moxie.Coerce[SourceType, TargetType](expr, moxie.Endianness)
+	coerceCall := &ast.CallExpr{
+		Fun: &ast.IndexListExpr{
+			X: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: "Coerce"},
+			},
+			Indices: []ast.Expr{
+				sourceElemType,
+				targetElemType,
+			},
+		},
+		Args: []ast.Expr{
+			sourceExpr,
+			&ast.SelectorExpr{
+				X:   &ast.Ident{Name: "moxie"},
+				Sel: &ast.Ident{Name: endianness},
+			},
+		},
 	}
 
 	st.needsRuntimeImport = true

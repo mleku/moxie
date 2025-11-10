@@ -1,0 +1,173 @@
+{
+  "Main Function": {
+    "prefix": "main",
+    "body": [
+      "package main",
+      "",
+      "import (",
+      "\t\"fmt\"",
+      ")",
+      "",
+      "func main() {",
+      "\t${1:fmt.Println(\"Hello, Moxie!\")}",
+      "}"
+    ],
+    "description": "Main function template"
+  },
+  "Function": {
+    "prefix": "func",
+    "body": [
+      "func ${1:name}(${2:params}) ${3:returnType} {",
+      "\t${4:// TODO}",
+      "}"
+    ],
+    "description": "Function declaration"
+  },
+  "Method": {
+    "prefix": "meth",
+    "body": [
+      "func (${1:receiver} ${2:Type}) ${3:name}(${4:params}) ${5:returnType} {",
+      "\t${6:// TODO}",
+      "}"
+    ],
+    "description": "Method declaration"
+  },
+  "If Statement": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} {",
+      "\t${2:// TODO}",
+      "}"
+    ],
+    "description": "If statement"
+  },
+  "If Error": {
+    "prefix": "iferr",
+    "body": [
+      "if err != nil {",
+      "\t${1:return err}",
+      "}"
+    ],
+    "description": "If error check"
+  },
+  "For Loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} := ${2:0}; ${1:i} < ${3:n}; ${1:i}++ {",
+      "\t${4:// TODO}",
+      "}"
+    ],
+    "description": "For loop"
+  },
+  "For Range": {
+    "prefix": "forr",
+    "body": [
+      "for ${1:i}, ${2:v} := range ${3:slice} {",
+      "\t${4:// TODO}",
+      "}"
+    ],
+    "description": "For range loop"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": [
+      "type ${1:Name} struct {",
+      "\t${2:Field} ${3:Type}",
+      "}"
+    ],
+    "description": "Struct declaration"
+  },
+  "Interface": {
+    "prefix": "interface",
+    "body": [
+      "type ${1:Name} interface {",
+      "\t${2:Method}(${3:params}) ${4:returnType}",
+      "}"
+    ],
+    "description": "Interface declaration"
+  },
+  "Channel Literal (Unbuffered)": {
+    "prefix": "chan",
+    "body": [
+      "&chan ${1:Type}{}"
+    ],
+    "description": "Create unbuffered channel"
+  },
+  "Channel Literal (Buffered)": {
+    "prefix": "chanb",
+    "body": [
+      "&chan ${1:Type}{${2:capacity}}"
+    ],
+    "description": "Create buffered channel"
+  },
+  "Goroutine": {
+    "prefix": "go",
+    "body": [
+      "go ${1:func}(${2:args})"
+    ],
+    "description": "Start goroutine"
+  },
+  "Select": {
+    "prefix": "select",
+    "body": [
+      "select {",
+      "case ${1:v} := <-${2:ch1}:",
+      "\t${3:// TODO}",
+      "case ${4:ch2} <- ${5:value}:",
+      "\t${6:// TODO}",
+      "default:",
+      "\t${7:// TODO}",
+      "}"
+    ],
+    "description": "Select statement"
+  },
+  "Clone": {
+    "prefix": "clone",
+    "body": [
+      "${1:copied} := clone(${2:original})"
+    ],
+    "description": "Clone (deep copy) a value"
+  },
+  "Free": {
+    "prefix": "free",
+    "body": [
+      "free(${1:ptr})"
+    ],
+    "description": "Free allocated memory"
+  },
+  "Grow": {
+    "prefix": "grow",
+    "body": [
+      "${1:slice} = grow(${1:slice}, ${2:n})"
+    ],
+    "description": "Grow slice capacity"
+  },
+  "Defer": {
+    "prefix": "defer",
+    "body": [
+      "defer ${1:func}(${2:args})"
+    ],
+    "description": "Defer statement"
+  },
+  "Switch": {
+    "prefix": "switch",
+    "body": [
+      "switch ${1:expr} {",
+      "case ${2:value1}:",
+      "\t${3:// TODO}",
+      "case ${4:value2}:",
+      "\t${5:// TODO}",
+      "default:",
+      "\t${6:// TODO}",
+      "}"
+    ],
+    "description": "Switch statement"
+  },
+  "Endianness Conversion": {
+    "prefix": "endian",
+    "body": [
+      "(*[]${1:uint32}, ${2|LittleEndian,BigEndian,NativeEndian|})(${3:bytes})"
+    ],
+    "description": "Endianness type coercion"
+  }
+}

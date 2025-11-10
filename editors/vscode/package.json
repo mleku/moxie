@@ -1,0 +1,139 @@
+{
+  "name": "moxie",
+  "displayName": "Moxie Language Support",
+  "description": "Language support for Moxie programming language",
+  "version": "0.12.0",
+  "publisher": "moxie-lang",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mleku/moxie"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "moxie",
+    "go",
+    "transpiler"
+  ],
+  "activationEvents": [
+    "onLanguage:moxie"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "moxie",
+        "aliases": [
+          "Moxie",
+          "moxie"
+        ],
+        "extensions": [
+          ".mx",
+          ".x"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/moxie-icon.png",
+          "dark": "./icons/moxie-icon.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "moxie",
+        "scopeName": "source.moxie",
+        "path": "./syntaxes/moxie.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "moxie",
+        "path": "./snippets/moxie.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "moxie.build",
+        "title": "Moxie: Build"
+      },
+      {
+        "command": "moxie.run",
+        "title": "Moxie: Run"
+      },
+      {
+        "command": "moxie.test",
+        "title": "Moxie: Test"
+      },
+      {
+        "command": "moxie.fmt",
+        "title": "Moxie: Format Document"
+      },
+      {
+        "command": "moxie.vet",
+        "title": "Moxie: Run Linter"
+      },
+      {
+        "command": "moxie.clean",
+        "title": "Moxie: Clean Cache"
+      }
+    ],
+    "configuration": {
+      "title": "Moxie",
+      "properties": {
+        "moxie.moxiePath": {
+          "type": "string",
+          "default": "moxie",
+          "description": "Path to the moxie executable"
+        },
+        "moxie.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Moxie Language Server"
+        },
+        "moxie.lsp.trace": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace LSP communication"
+        },
+        "moxie.formatOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Format document on save"
+        },
+        "moxie.vetOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run linter on save"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

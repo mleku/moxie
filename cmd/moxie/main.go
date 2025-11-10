@@ -11,7 +11,6 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,6 +52,31 @@ func main() {
 			fmt.Fprintf(os.Stderr, "moxie test: %v\n", err)
 			os.Exit(1)
 		}
+	case "fmt":
+		if err := formatCommand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "moxie fmt: %v\n", err)
+			os.Exit(1)
+		}
+	case "watch":
+		if err := watchCommand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "moxie watch: %v\n", err)
+			os.Exit(1)
+		}
+	case "vet":
+		if err := vetCommand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "moxie vet: %v\n", err)
+			os.Exit(1)
+		}
+	case "clean":
+		if err := cleanCommand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "moxie clean: %v\n", err)
+			os.Exit(1)
+		}
+	case "lsp":
+		if err := lspCommand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "moxie lsp: %v\n", err)
+			os.Exit(1)
+		}
 	case "version":
 		fmt.Println("moxie version 0.1.0 (transpiler mode)")
 	case "help", "--help", "-h":
@@ -77,6 +101,11 @@ The commands are:
 	install     transpile and compile and install packages and dependencies
 	run         transpile and run Moxie program
 	test        transpile and test packages
+	fmt         format Moxie source files
+	watch       watch for changes and rebuild automatically
+	vet         run static analysis on Moxie code
+	clean       remove cached build artifacts
+	lsp         start Language Server Protocol server (for IDEs)
 	version     print Moxie version
 
 Use "moxie help <command>" for more information about a command.
@@ -705,30 +734,6 @@ func copyRuntimeDir(dstDir string) error {
 	return nil
 }
 
-func copyFile(src, dst string) error {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		return err
-	}
-
-	// Copy permissions
-	srcInfo, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-	return os.Chmod(dst, srcInfo.Mode())
-}
 
 func isExecutable(path string) bool {
 	info, err := os.Stat(path)

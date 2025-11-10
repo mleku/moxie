@@ -3,6 +3,8 @@
 
 package main
 
+import "fmt"
+
 type PacketHeader struct {
 	Magic   uint32
 	Version uint16
@@ -12,9 +14,8 @@ type PacketHeader struct {
 
 func parseHeader(data *[]byte) PacketHeader {
 	// Network protocols use big-endian byte order
-	// Note: Endianness syntax requires parser extension
-	// For now, using native endian (demonstration purposes)
-	fields := (*[]uint32)(data)
+	// Use endianness tuple syntax to specify BigEndian conversion
+	fields := (*[]uint32, BigEndian)(data)
 
 	// Extract fields from the uint32 array
 	magic := (*fields)[0]
@@ -30,7 +31,7 @@ func parseHeader(data *[]byte) PacketHeader {
 }
 
 func main() {
-	moxie.Print("=== Phase 6: Network Protocol Parsing Test ===")
+	fmt.Println("=== Phase 6: Network Protocol Parsing Test ===")
 
 	// Simulated network packet (12 bytes)
 	packet := &[]byte{
@@ -39,18 +40,18 @@ func main() {
 		0xAB, 0xCD, 0xEF, 0x12, // CRC: 0xABCDEF12
 	}
 
-	moxie.Print("Packet bytes:", packet)
+	fmt.Printf("Packet bytes: %v\n", *packet)
 
 	// Parse header using zero-copy coercion
 	header := parseHeader(packet)
 
-	moxie.Printf("Magic:   0x%08X\n", header.Magic)
-	moxie.Printf("Version: %d\n", header.Version)
-	moxie.Printf("Length:  %d\n", header.Length)
-	moxie.Printf("CRC:     0x%08X\n", header.CRC)
+	fmt.Printf("Magic:   0x%08X\n", header.Magic)
+	fmt.Printf("Version: %d\n", header.Version)
+	fmt.Printf("Length:  %d\n", header.Length)
+	fmt.Printf("CRC:     0x%08X\n", header.CRC)
 
-	// Note: Values will be different on little-endian vs big-endian platforms
-	// This demonstrates zero-copy parsing works, but endianness requires parser extension
-	moxie.Print("✓ Zero-copy type coercion demonstrated")
-	moxie.Print("Note: Proper endianness conversion requires parser extension")
+	// Note: BigEndian conversion ensures consistent interpretation regardless of platform
+	// This demonstrates zero-copy parsing with automatic endianness handling
+	fmt.Println("\n✓ Zero-copy type coercion with endianness conversion")
+	fmt.Println("Note: Big-endian conversion applied for network byte order")
 }

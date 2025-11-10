@@ -17,7 +17,21 @@
       "Bash(cat:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go build:*)",
       "Bash(./moxie build:*)",
-      "Bash(./moxie run:*)"
+      "Bash(./moxie run:*)",
+      "Bash(/tmp/moxie-build-2424731437/test_array_concat_types:*)",
+      "Bash(./moxie:*)",
+      "Bash(./moxie help:*)",
+      "Bash(./moxie)",
+      "Bash(go build:*)",
+      "Bash(timeout 5 ./moxie fmt:*)",
+      "Bash(/tmp/formatted_output.txt)",
+      "Bash(echo:*)",
+      "Bash(go get:*)",
+      "Bash(timeout 3 ./moxie watch:*)",
+      "Bash(pkill:*)",
+      "Bash(do:*)",
+      "Bash(/dev/null)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
