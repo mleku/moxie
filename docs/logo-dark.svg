@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="270.9552mm"
+   height="270.9552mm"
+   viewBox="0 0 270.9552 270.9552"
+   version="1.1"
+   id="svg899"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="logo-dark.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview901"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.24157746"
+     inkscape:cx="964.49397"
+     inkscape:cy="589.87292"
+     inkscape:window-width="1511"
+     inkscape:window-height="992"
+     inkscape:window-x="2602"
+     inkscape:window-y="322"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g281634" />
+  <defs
+     id="defs896" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(124.54792,40.907791)">
+    <g
+       id="g281634"
+       transform="matrix(25.228724,0,0,25.228724,-1709.9489,-663.15514)"
+       style="stroke:none;stroke-width:0.0352486;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <circle
+         style="fill:#ff7f2a;fill-opacity:1;stroke:none;stroke-width:0.0352486;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="circle252111"
+         cx="68.211082"
+         cy="30.034216"
+         r="5.3699741" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.6116px;line-height:1.25;font-family:Uroob;-inkscape-font-specification:Uroob;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0352486;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         x="65.892342"
+         y="32.472149"
+         id="text252115"><tspan
+           sodipodi:role="line"
+           id="tspan252113"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Uroob;-inkscape-font-specification:Uroob;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0352486;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           x="65.892342"
+           y="32.472149">x</tspan></text>
+      <path
+         id="path252117"
+         d="m 71.122082,26.071652 c 0.338416,0 0.507627,0.172286 0.507627,0.516861 0,0.347648 -0.169211,0.521474 -0.507627,0.521474 -0.166135,0 -0.293814,-0.04462 -0.38303,-0.133835 -0.08922,-0.0923 -0.133837,-0.221514 -0.133837,-0.387644 0,-0.166136 0.04464,-0.293811 0.133837,-0.38303 0.08922,-0.08922 0.216895,-0.133835 0.38303,-0.133835 z"
+         style="font-size:5.63252px;line-height:1.25;font-family:Uroob;-inkscape-font-specification:Uroob;fill:#000000;stroke:none;stroke-width:0.0352486;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:nodetypes="csscsscc" />
+    </g>
+  </g>
+</svg>

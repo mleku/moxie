@@ -104,6 +104,7 @@ cmd/benchmark/data
 !app/web/dist/*.png
 !app/web/dist/*.svg
 !*.x
+!*.svg
 # ...even if they are in subdirectories
 !*/
 /blocklist.json
