@@ -35,6 +35,18 @@ func (st *SyntaxTransformer) Transform(file *ast.File) error {
 	st.errors = nil
 	st.needsRuntimeImport = false
 
+	// Pre-pass: Record all function signatures and declarations
+	// This must happen before any transformations so that type inference works correctly
+	ast.Inspect(file, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.FuncDecl:
+			st.typeTracker.RecordFunc(n)
+		case *ast.GenDecl:
+			st.typeTracker.RecordDecl(n)
+		}
+		return true
+	})
+
 	// First pass: transform types, literals, comparisons
 	// Multiple passes needed for chained string concatenation
 	maxPasses := 10
@@ -45,6 +57,11 @@ func (st *SyntaxTransformer) Transform(file *ast.File) error {
 		astutil.Apply(file, func(cursor *astutil.Cursor) bool {
 			node := cursor.Node()
 			switch n := node.(type) {
+			case *ast.FuncDecl:
+				// Record function signatures (first pass only)
+				if pass == 0 {
+					st.typeTracker.RecordFunc(n)
+				}
 			case *ast.GenDecl:
 				// Record type information from declarations (first pass only)
 				if pass == 0 {
@@ -722,7 +739,7 @@ func (st *SyntaxTransformer) addRuntimeImport(file *ast.File) {
 	if importDecl == nil {
 		// Create new import declaration
 		importDecl = &ast.GenDecl{
-			Tok: token.IMPORT,
+			Tok:   token.IMPORT,
 			Specs: []ast.Spec{newImport},
 		}
 		// Insert at beginning of declarations
@@ -1063,7 +1080,8 @@ func (st *SyntaxTransformer) tryTransformEndiannessConstant(ident *ast.Ident) as
 // tryTransformTypeCoercion transforms type coercion expressions
 // Detects: (*[]TargetType)(sourceSlice) or (*[]TargetType, Endian)(sourceSlice)
 // Transforms to: moxie.Coerce[SourceType, TargetType](sourceSlice) or
-//                moxie.Coerce[SourceType, TargetType](sourceSlice, moxie.Endian)
+//
+//	moxie.Coerce[SourceType, TargetType](sourceSlice, moxie.Endian)
 func (st *SyntaxTransformer) tryTransformTypeCoercion(call *ast.CallExpr) ast.Expr {
 	// Check if this is a type conversion/cast (Fun is a type expression)
 	// Pattern: (Type)(expr) where Type is (*[]T)
@@ -1343,14 +1361,9 @@ func (st *SyntaxTransformer) transformFreeCall(node *ast.CallExpr) {
 	case *ast.Ident:
 		// Look up identifier in type tracker
 		argType = st.typeTracker.GetType(a.Name)
+		// If not found in direct lookup, try inference
 		if argType == nil {
-			// Can't find type, use generic Free without type params
-			node.Fun = &ast.SelectorExpr{
-				X:   &ast.Ident{Name: "moxie"},
-				Sel: &ast.Ident{Name: "Free"},
-			}
-			st.needsRuntimeImport = true
-			return
+			argType = st.typeTracker.inferTypeFromExpr(arg)
 		}
 	case *ast.UnaryExpr:
 		// &T{...}

@@ -8,7 +8,16 @@
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/src/github.com/mleku/moxie/moxie build:*)",
       "Bash(JAVA_HOME=/home/mleku/tools/jdk-21.0.1 PATH=$JAVA_HOME/bin:$PATH ./gradlew:*)",
       "Bash(unzip:*)",
-      "Bash(jar tf:*)"
+      "Bash(jar tf:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local ./moxie build:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go mod tidy:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go run:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local ./moxie run:*)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go build:*)",
+      "Bash(./moxie build:*)",
+      "Bash(./moxie run:*)"
     ],
     "deny": [],
     "ask": []

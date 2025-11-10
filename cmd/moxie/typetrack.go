@@ -11,13 +11,15 @@ import (
 
 // TypeTracker tracks variable types throughout AST traversal
 type TypeTracker struct {
-	types map[string]ast.Expr // Maps variable names to their type expressions
+	types     map[string]ast.Expr      // Maps variable names to their type expressions
+	functions map[string]*ast.FuncType // Maps function names to their signatures
 }
 
 // NewTypeTracker creates a new type tracker
 func NewTypeTracker() *TypeTracker {
 	return &TypeTracker{
-		types: make(map[string]ast.Expr),
+		types:     make(map[string]ast.Expr),
+		functions: make(map[string]*ast.FuncType),
 	}
 }
 
@@ -46,6 +48,30 @@ func (tt *TypeTracker) RecordDecl(decl *ast.GenDecl) {
 				// Try to infer type from value
 				if inferredType := tt.inferTypeFromExpr(valueSpec.Values[0]); inferredType != nil {
 					tt.types[name.Name] = inferredType
+				}
+			}
+		}
+	}
+}
+
+// RecordFunc records function signature information
+func (tt *TypeTracker) RecordFunc(funcDecl *ast.FuncDecl) {
+	if funcDecl == nil || funcDecl.Name == nil {
+		return
+	}
+
+	// Store the function type (signature)
+	tt.functions[funcDecl.Name.Name] = funcDecl.Type
+
+	// Also record parameter types in the types map
+	// This helps when we're inside a function and need to look up parameter types
+	if funcDecl.Type.Params != nil {
+		for _, field := range funcDecl.Type.Params.List {
+			if field.Type != nil {
+				for _, name := range field.Names {
+					if name.Name != "_" {
+						tt.types[name.Name] = field.Type
+					}
 				}
 			}
 		}
@@ -110,6 +136,14 @@ func (tt *TypeTracker) inferTypeFromExpr(expr ast.Expr) ast.Expr {
 				if len(e.Args) > 0 {
 					if argType := tt.inferTypeFromExpr(e.Args[0]); argType != nil {
 						return argType
+					}
+				}
+			default:
+				// Check if this is a user-defined function call
+				// Look up the function signature and return the first return type
+				if funcType, ok := tt.functions[ident.Name]; ok {
+					if funcType.Results != nil && len(funcType.Results.List) > 0 {
+						return funcType.Results.List[0].Type
 					}
 				}
 			}

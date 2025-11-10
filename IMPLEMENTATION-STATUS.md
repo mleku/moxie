@@ -153,8 +153,7 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 - ✅ All 8 Phase 2 test programs passing
 
 **Known Limitations** ⚠️:
-- ⚠️ Type detection for free() not implemented (always uses FreeSlice)
-  - **Workaround**: Manually use FreeMap if needed
+- ✅ ~~Type detection for free() not implemented~~ **FIXED!** Now correctly detects map/slice/struct types including function parameters and return values
 - ⚠️ Double-dereference protection in place for append() transformations
 - ⚠️ Nested slice cloning: CloneSlice does shallow copy (inner slices are shared)
   - **Workaround**: Wrap in struct and use clone() (will use DeepCopy)
