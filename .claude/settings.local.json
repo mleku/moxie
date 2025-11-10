@@ -31,7 +31,9 @@
       "Bash(pkill:*)",
       "Bash(do:*)",
       "Bash(/dev/null)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(go mod tidy:*)",
+      "Bash(/home/mleku/src/github.com/mleku/moxie/moxie build:*)"
     ],
     "deny": [],
     "ask": []

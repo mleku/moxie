@@ -1,6 +1,6 @@
 # Moxie Transpiler - Implementation Status
 
-**Last Updated**: 2025-11-10 (Phase 11 BOOTSTRAP - Self-Hosting Compiler Functional!)
+**Last Updated**: 2025-11-10 (Phase 11 BOOTSTRAP - In Progress)
 
 ## Overview
 
@@ -8,35 +8,30 @@ This document tracks the implementation progress of the Moxie-to-Go transpiler a
 
 ---
 
-## 🎉 **MAJOR MILESTONE: SELF-HOSTING ACHIEVED!** 🎉
+## 🚧 **PHASE 11: BOOTSTRAP IN PROGRESS** 🚧
 
-**Date**: 2025-11-10
-**Commit**: a01a34b - "moxie bootstrap compiler, written in moxie, can compile itself"
+**Started**: 2025-11-10
+**Status**: Foundation laid, implementation ongoing
 
-The **Moxie bootstrap compiler**, written entirely in Moxie (~888 lines of `.x` code), can now **compile itself**! This is a major milestone proving:
+The **Moxie bootstrap compiler** (transpiler written in Moxie) is being developed in `moxie-bootstrap/`. This will achieve true self-hosting when complete.
 
-1. ✅ **Moxie is a complete, self-hosting language**
-2. ✅ **All language features work correctly** in real-world usage
-3. ✅ **The Go transpiler is fully functional** and correct
-4. ✅ **Moxie is ready for v1.0.0** production release
+**Current Progress**:
+- ✅ Directory structure created
+- ✅ Basic command structure (~888 lines across 8 files)
+- ✅ Go-based transpiler is complete and fully functional
+- 🚧 Bootstrap implementation needs completion and bug fixes
 
-**Bootstrap Stats**:
-- 8 source files totaling 888 lines of Moxie code
-- Full transpiler with preprocessing, syntax transformations, and build system
-- Successfully compiles itself using the Go-based transpiler
-- Located in `moxie-bootstrap/cmd/moxie/`
-
-**This achievement demonstrates that Moxie has reached language maturity!**
+**Goal**: A Moxie compiler written entirely in Moxie that has feature parity with the Go implementation.
 
 ---
 
 ## Current Status
 
-**Overall Progress**: Phase 11 - 🎉 BOOTSTRAP COMPLETE (Self-Hosting Compiler Functional!)
-**Current Phase**: Phase 11 - Bootstrap (Moxie Compiler Written in Moxie - Self-Compiling!)
-**Completed Phases**: 1-7, 10, 11 (All language features, tooling, validation, and self-hosting complete!)
-**Status**: ✅ **Bootstrap compiler can compile itself!** (~888 lines of Moxie code)
-**Next Milestone**: v1.0.0 Production Release
+**Overall Progress**: Phase 11 - 🚧 BOOTSTRAP IN PROGRESS
+**Current Phase**: Phase 11 - Bootstrap (Rewriting Moxie Transpiler in Moxie)
+**Completed Phases**: 1-7, 10 (All language features, tooling, and validation complete)
+**Bootstrap Status**: 🚧 Foundation laid (~888 lines), implementation ongoing
+**Next Milestone**: Complete self-hosting bootstrap → v1.0.0 Production Release
 
 ## Phase Completion Summary
 
@@ -695,54 +690,215 @@ All essential tooling and IDE integration is now complete for professional Moxie
 - VS Code extension complete
 - Self-hosting ready
 
-### Phase 11: Bootstrap ✅ COMPLETE (100%)
-**Status**: ✅ Complete - **SELF-HOSTING ACHIEVED!** 🎉
-**Completion Date**: 2025-11-10
+### Phase 11: Bootstrap 🚧 IN PROGRESS
+**Status**: 🚧 In Progress - Foundation laid, implementation ongoing
 **Started**: 2025-11-10
 **Dependencies**: Phases 1-7 (All complete)
 **Documentation**: `PHASE11-BOOTSTRAP.md`
 **Directory**: `moxie-bootstrap/` (Moxie implementation)
 
-**Goal**: Rewrite Moxie transpiler in Moxie itself for self-hosting ✅
+**Goal**: Rewrite Moxie transpiler in Moxie itself for self-hosting
 
-**Implementation**: ~888 lines of Moxie code
+**Current Implementation**: ~888 lines of Moxie code (foundation)
 
-**Files Implemented** ✅:
-- `main.x` (107 lines) - Main entry point
-- `commands.x` (220 lines) - Command handling (build, run, test, install)
-- `transpile.x` (120 lines) - Core transpilation logic
-- `build.x` (147 lines) - Build system integration
-- `preprocess.x` (80 lines) - Syntax preprocessing
-- `syntax.x` (34 lines) - Syntax transformations
-- `const.x` (70 lines) - Const enforcement
-- `utils.x` (110 lines) - Utility functions
+**Files Started** 🚧:
+- `main.x` (107 lines) - Main entry point (basic structure)
+- `commands.x` (220 lines) - Command handling (partial)
+- `transpile.x` (120 lines) - Core transpilation logic (stub)
+- `build.x` (147 lines) - Build system integration (partial)
+- `preprocess.x` (80 lines) - Syntax preprocessing (stub)
+- `syntax.x` (34 lines) - Syntax transformations (stub)
+- `const.x` (70 lines) - Const enforcement (stub)
+- `utils.x` (110 lines) - Utility functions (partial)
 - `go.mod` - Module definition
 
-**Completed Features** ✅:
-- ✅ Core transpiler (parser, syntax transformations)
-- ✅ Preprocessing (channel literals, endianness tuples)
-- ✅ Build system (build, run, test, install commands)
-- ✅ Const enforcement
-- ✅ File handling and I/O
-- ✅ **Self-compilation test** - Bootstrap compiler can compile itself!
-- ✅ Module system integration
+---
 
-**Key Achievement** 🎉:
-The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **compile itself**! This proves:
-1. Moxie is a complete, self-hosting language
-2. The Go transpiler implementation is correct and comprehensive
-3. All language features work in real-world usage
-4. The bootstrap is ready for v1.0.0 production release
+## 📋 **BOOTSTRAP REMAINING TASKS** 📋
 
-**Commit**: a01a34b "moxie bootstrap compiler, written in moxie, can compile itself"
+### **Critical Path to Self-Hosting**
 
-**Not Yet Implemented** (Lower Priority):
-- ⏳ Name transformations (disabled in Go transpiler, not needed for bootstrap)
-- ⏳ Advanced tooling (formatter, watch, linter) - can use Go version
-- ⏳ LSP server - can use Go version
-- ⏳ Caching & source mapping - can use Go version
+To achieve a fully functional Moxie compiler written in Moxie with feature parity to the Go implementation:
 
-**Status**: **SELF-HOSTING MILESTONE ACHIEVED!** 🚀
+#### **1. Core Infrastructure** (Foundation - STARTED)
+- [x] Directory structure created
+- [x] Basic file structure (~888 lines)
+- [ ] **Fix string type handling** - Go stdlib functions need Go strings, not `*[]byte`
+  - Need string conversion helpers for Go interop
+  - Or keep some strings as Go strings (not transpiled)
+- [ ] **Module system integration**
+  - go.mod handling
+  - Dependency resolution
+  - Runtime package copying
+
+#### **2. Core Transpiler** (~3,000 lines to port from Go)
+- [ ] **Parser integration** (`cmd/moxie/main.go` lines 400-500)
+  - Wrap `go/parser` and `go/ast`
+  - File parsing
+  - AST traversal
+  - Import tracking
+- [ ] **Preprocessing** (`cmd/moxie/preprocess.go` - 81 lines) ✅ STUB EXISTS
+  - Channel literal syntax transformation
+  - Endianness tuple syntax transformation
+  - Marker injection and removal
+- [ ] **Syntax transformations** (`cmd/moxie/syntax.go` - ~1,500 lines) ⚠️ CRITICAL
+  - Explicit pointer syntax (`*[]T`, `*map[K]V`)
+  - Channel literals (`&chan T{}`)
+  - make() detection and errors
+  - append() transformation
+  - clear() transformation
+  - grow() built-in
+  - clone() built-in with type detection
+  - free() built-in with type detection
+  - String transformations (`string` → `*[]byte`)
+  - String literals transformation
+  - String concatenation
+  - String comparisons
+  - Array concatenation
+  - Type coercion (`(*[]T)(x)`, `(*[]T, Endian)(x)`)
+  - Import injection (runtime, bytes packages)
+
+#### **3. Type System** (~800 lines to port)
+- [ ] **Type tracking** (`cmd/moxie/typetrack.go` - ~280 lines)
+  - Variable type tracking
+  - Function signature tracking
+  - Type inference for clone()/free()
+  - Composite literal type detection
+- [ ] **Type mapper** (`cmd/moxie/typemap.go` - 210 lines)
+  - Type expression transformation
+  - Export status preservation
+  - Builtin type exclusions
+- [ ] **Type tests** (40+ test cases to validate)
+
+#### **4. Name Transformations** (~890 lines - OPTIONAL)
+These are disabled by default but infrastructure exists:
+- [ ] **Package mapper** (`cmd/moxie/pkgmap.go` - 130 lines)
+- [ ] **Function mapper** (`cmd/moxie/funcmap.go` - 202 lines)
+- [ ] **Variable mapper** (`cmd/moxie/varmap.go` - 318 lines)
+- [ ] **Naming utilities** (`cmd/moxie/naming.go` - 240 lines)
+
+#### **5. Build System** (~500 lines to port)
+- [ ] **Build command** (`build.x` - needs fixes)
+  - Transpile source files
+  - Create temp directory
+  - Copy runtime module
+  - Handle go.mod/go.sum
+  - Invoke Go compiler
+  - Handle -o flag for output binary
+- [ ] **Run command** (needs implementation)
+  - Build + execute
+  - Pass arguments
+- [ ] **Test command** (needs implementation)
+  - Build test files
+  - Run tests
+- [ ] **Install command** (needs implementation)
+  - Build and install to $GOPATH/bin
+
+#### **6. Const Enforcement** (~133 lines)
+- [ ] **Const checker** (`cmd/moxie/const.go` - 133 lines) ✅ STUB EXISTS
+  - Track const declarations
+  - Detect const mutations
+  - Pre-transpilation validation
+
+#### **7. Tooling Commands** (~1,430 lines - OPTIONAL for v1.0)
+Can use Go version initially:
+- [ ] **Formatter** (`cmd/moxie/format.go` - 330 lines)
+- [ ] **Watch mode** (`cmd/moxie/watch.go` - 350 lines)
+- [ ] **Linter** (`cmd/moxie/vet/` - ~600 lines)
+- [ ] **Clean command** (`cmd/moxie/clean.go` - 70 lines)
+- [ ] **Cache system** (`cmd/moxie/cache.go` - 180 lines)
+- [ ] **Source mapping** (`cmd/moxie/sourcemap.go` - 140 lines)
+
+#### **8. LSP Server** (~800 lines - OPTIONAL for v1.0)
+Can use Go version initially:
+- [ ] **LSP core** (`cmd/moxie/lsp/` - 6 files, ~800 lines)
+
+#### **9. Testing & Validation**
+- [ ] **Unit tests for bootstrap**
+  - Test each component
+  - Validate against Go version
+- [ ] **Self-compilation test** ⚠️ CRITICAL
+  - Bootstrap compiles itself
+  - Output matches Go version
+  - Binary is functional
+- [ ] **Integration tests**
+  - Compile all example files
+  - Run Phase 2-6 tests
+  - Verify 100% pass rate
+
+#### **10. Documentation**
+- [ ] Update README.md
+- [ ] Update PHASE11-BOOTSTRAP.md
+- [ ] Document differences from Go version
+- [ ] Migration guide
+
+---
+
+### **Estimated Effort**
+
+| Component | Lines | Priority | Status |
+|-----------|-------|----------|--------|
+| Core Infrastructure | ~200 | ⚠️ CRITICAL | 🚧 Needs fixes |
+| Core Transpiler | ~3,000 | ⚠️ CRITICAL | 🚧 Stubs exist |
+| Type System | ~800 | ⚠️ CRITICAL | ❌ Not started |
+| Name Transformations | ~890 | ⏳ Optional | ❌ Not started |
+| Build System | ~500 | ⚠️ CRITICAL | 🚧 Needs fixes |
+| Const Enforcement | ~133 | ✅ Medium | 🚧 Stub exists |
+| Tooling Commands | ~1,430 | ⏳ Optional | ❌ Not started |
+| LSP Server | ~800 | ⏳ Optional | ❌ Not started |
+| **Critical Path Total** | **~4,600 lines** | | **~20% done** |
+| **Full Feature Parity** | **~7,800 lines** | | **~11% done** |
+
+---
+
+### **Key Challenges**
+
+1. **String Type Interop** ⚠️
+   - Moxie strings are `*[]byte`
+   - Go stdlib functions expect Go `string`
+   - Need conversion layer or special handling
+
+2. **AST Transformation Complexity**
+   - 1,500 lines of complex AST walking
+   - Type inference logic
+   - Multi-pass transformations
+
+3. **Module System**
+   - Runtime package copying
+   - go.mod/go.sum handling
+   - Dependency resolution
+
+4. **Self-Compilation Bootstrap**
+   - Must compile itself before declaring success
+   - Output must be identical to Go version
+   - Binary must be functional
+
+---
+
+### **Success Criteria**
+
+#### **Minimum Viable Bootstrap** (v1.0.0 Release)
+- ✅ Transpiles .x files to .go files correctly
+- ✅ All syntax transformations working
+- ✅ Build, run, test commands functional
+- ✅ **Self-compilation test passes** ⚠️ CRITICAL
+- ✅ All Phase 2-6 example files compile
+- ✅ 100% test pass rate maintained
+
+#### **Full Feature Parity** (Post-v1.0.0)
+- All tooling commands (fmt, watch, vet, clean)
+- LSP server
+- Build caching
+- Error message mapping
+- Performance within 2x of Go version
+
+---
+
+### **Current Blockers**
+
+1. **String type handling** - Need strategy for Go stdlib interop
+2. **Core transpiler** - 1,500 lines of syntax.go to port
+3. **Type system** - Type tracking and inference logic
 
 ## Statistics
 
@@ -756,9 +912,10 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 | Tooling Files | 17 (Phase 7: fmt, watch, vet, sourcemap, cache, clean, lsp) |
 | VS Code Extension | 7 files (~500 lines TypeScript + config) |
 | **Bootstrap Compiler** | |
-| Total Lines of Moxie Code | **~888 lines** |
-| Source Files (.x) | 8 files |
-| **Self-Hosting Status** | ✅ **CAN COMPILE ITSELF!** |
+| Total Lines of Moxie Code | **~888 lines (foundation)** |
+| Source Files (.x) | 8 files (stubs/partial) |
+| **Self-Hosting Status** | 🚧 **IN PROGRESS (~20% complete)** |
+| Remaining Critical Path | ~4,600 lines to implement |
 | **Testing** | |
 | Test Files | 6 |
 | Example Files | 25 (3 Phase 0, 9 Phase 2, 6 Phase 3, 4 Phase 4, 7 Phase 6) |
@@ -769,7 +926,7 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 | Phase 4 Tests | 4/4 passing ✅ |
 | Phase 5 Tests | 2/2 passing ✅ |
 | Phase 6 Tests | 14/14 passing ✅ (2 const tests + 7 runtime coercion tests + 3 FFI tests + 2 endianness tests) |
-| **Bootstrap Test** | ✅ **Self-compilation successful!** |
+| **Bootstrap Status** | 🚧 **Foundation laid, ~20% complete** |
 
 ### File Breakdown
 
@@ -799,19 +956,21 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 | `cmd/moxie/funcmap_test.go` | 259 | Function tests |
 | `cmd/moxie/varmap_test.go` | 371 | Variable tests |
 
-#### Bootstrap Compiler (moxie-bootstrap/cmd/moxie) - Written in Moxie! ✨
+#### Bootstrap Compiler (moxie-bootstrap/cmd/moxie) - 🚧 In Progress
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `main.x` | 107 | Main entry point and CLI |
-| `commands.x` | 220 | Command handling (build, run, test, install) |
-| `transpile.x` | 120 | Core transpilation logic |
-| `build.x` | 147 | Build system integration |
-| `preprocess.x` | 80 | Syntax preprocessing (channels, endianness) |
-| `syntax.x` | 34 | Syntax transformations |
-| `const.x` | 70 | Const enforcement |
-| `utils.x` | 110 | Utility functions (file I/O, path handling) |
-| **Total** | **888** | **Self-hosting Moxie compiler!** ✅
+| File | Lines | Status | Purpose |
+|------|-------|--------|---------|
+| `main.x` | 107 | 🚧 Partial | Main entry point and CLI (basic structure) |
+| `commands.x` | 220 | 🚧 Partial | Command handling (needs work) |
+| `transpile.x` | 120 | 🚧 Stub | Core transpilation logic (needs implementation) |
+| `build.x` | 147 | 🚧 Partial | Build system integration (has bugs) |
+| `preprocess.x` | 80 | 🚧 Stub | Syntax preprocessing (needs implementation) |
+| `syntax.x` | 34 | 🚧 Stub | Syntax transformations (needs implementation) |
+| `const.x` | 70 | 🚧 Stub | Const enforcement (needs implementation) |
+| `utils.x` | 110 | 🚧 Partial | Utility functions (partial implementation) |
+| **Total** | **888** | **~20%** | **Foundation laid, ~4,600 lines remaining**
+| **Needed** | **~4,600** | ❌ | Core transpiler, type system, complete build system |
+| **Grand Total** | **~5,500** | | **Complete bootstrap compiler** |
 
 ## Test Coverage
 
@@ -954,9 +1113,9 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 
 ## Next Steps
 
-### ✅ ALL CORE PHASES COMPLETE! 🎉🎉🎉
+### 🚧 Phase 11: Bootstrap Implementation
 
-**Phases 1-11 DONE! Self-Hosting Achieved!**
+**Status**: Foundation laid (~888 lines), ~4,600 critical lines remaining
 
 ### Phases 1-6 - Complete! 🎉
 ✅ All name transformations (types, functions, variables) - Phase 1
@@ -992,16 +1151,31 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 - [x] Implement LSP server (`moxie lsp`) - ✅ COMPLETE! (2025-11-10)
 - [x] VS Code extension - ✅ COMPLETE! (2025-11-10)
 
-### Phase 11: Bootstrap - ✅ COMPLETE! 🎉🎉🎉
-- [x] **Moxie compiler written in Moxie** - ✅ COMPLETE! (~888 lines)
-- [x] **Self-compilation test** - ✅ WORKS! Can compile itself!
-- [x] Core transpiler - ✅ COMPLETE!
-- [x] Preprocessing (channels, endianness) - ✅ COMPLETE!
-- [x] Build system integration - ✅ COMPLETE!
-- [x] Const enforcement - ✅ COMPLETE!
-- [x] File I/O and utilities - ✅ COMPLETE!
+### Phase 11: Bootstrap - 🚧 IN PROGRESS (~20% complete)
 
-**Status**: 🚀 **SELF-HOSTING LANGUAGE!** Moxie compiler written in Moxie can compile itself!
+**Critical Path Remaining** (~4,600 lines):
+- [ ] **Fix string type interop** - Go stdlib needs Go strings
+- [ ] **Core transpiler** (~3,000 lines)
+  - [ ] Parser integration
+  - [ ] Syntax transformations (most critical: 1,500 lines)
+  - [ ] Preprocessing implementation
+- [ ] **Type system** (~800 lines)
+  - [ ] Type tracking and inference
+  - [ ] Type mapper
+- [ ] **Build system fixes** (~500 lines)
+  - [ ] Fix build.x bugs
+  - [ ] Implement run/test/install commands
+- [ ] **Testing & validation**
+  - [ ] Self-compilation test ⚠️ CRITICAL
+  - [ ] All examples compile
+  - [ ] 100% test pass rate
+
+**Foundation Completed** (~888 lines):
+- [x] Directory structure
+- [x] Basic command framework (stubs)
+- [x] File structure laid out
+
+**Status**: 🚧 **~20% COMPLETE** - Foundation laid, core implementation in progress
 
 ### Phase 7.1: Essential Tools - ✅ Complete
 ✅ **Formatter (`moxie fmt`)**:
@@ -1046,27 +1220,43 @@ The Moxie bootstrap compiler, **written entirely in Moxie**, can successfully **
 
 ### Remaining Tasks for v1.0.0 Release
 
-**Core Implementation**: ✅ **COMPLETE!** All phases 1-11 done!
-
-**Remaining Polish** (Optional):
-- [ ] Documentation generator (`moxie doc`) - Low priority
-- [ ] Additional optimization (Phase 8) - Optional
-  - Compile-time evaluation
-  - Inlining hints
-  - SIMD support
-  - Profile-guided optimization
-- [ ] Additional testing (Phase 10) - Nice to have
-  - Fuzzing and stress tests
-  - Extended benchmarking
-
-**Ready for v1.0.0**:
+**Core Language & Tooling**: ✅ **COMPLETE!** (Phases 1-7, 10)
 - ✅ Complete language implementation (Phases 1-6)
 - ✅ Full tooling suite (Phase 7)
-- ✅ Self-hosting compiler (Phase 11)
 - ✅ Comprehensive test coverage (337+ tests, 100% pass rate)
-- ✅ Bootstrap compiler (~888 lines of Moxie)
 - ✅ VS Code extension with LSP
 - ✅ Complete documentation (spec, quickstart, phase docs)
+
+**Bootstrap Compiler (Phase 11)**: 🚧 **IN PROGRESS (~20% complete)**
+
+**Critical Path to v1.0.0** (~4,600 lines remaining):
+1. **String type interop** - Fix Go stdlib compatibility
+2. **Core transpiler** (~3,000 lines)
+   - Parser integration
+   - Syntax transformations (1,500 lines - most critical)
+   - Preprocessing implementation
+3. **Type system** (~800 lines)
+   - Type tracking and inference
+   - Type mapper
+4. **Build system** (~500 lines)
+   - Fix build.x bugs
+   - Complete run/test/install commands
+5. **Self-compilation test** ⚠️ CRITICAL MILESTONE
+   - Bootstrap must compile itself
+   - Output identical to Go version
+   - Binary fully functional
+
+**Optional for Post-v1.0.0**:
+- Name transformations (~890 lines - disabled by default)
+- Advanced tooling in bootstrap (fmt, watch, vet, lsp - can use Go versions)
+- Additional optimization
+- Fuzzing and stress tests
+
+**v1.0.0 Release Criteria**:
+- ✅ Go-based transpiler complete (Phases 1-7)
+- ✅ All language features working
+- ✅ Full tooling suite
+- 🚧 **Bootstrap self-compilation** (Phase 11 - IN PROGRESS)
 
 ## How to Use
 
@@ -1274,21 +1464,27 @@ When implementing new phases:
   - **Commands added**: 5 new commands (total: 9 commands)
   - **Total Phase 7 code**: ~3,300 lines across 17 files
   - **VS Code extension ready** for installation and testing
-- **v0.14.0** - Phase 11 Bootstrap - Self-Hosting Compiler (2025-11-10) ✅ - **🎉🎉🎉 SELF-HOSTING ACHIEVED! 🎉🎉🎉**
-  - **Moxie Bootstrap Compiler** - Transpiler written entirely in Moxie!
-    - Total: ~888 lines of Moxie code across 8 files
-    - `main.x` (107 lines) - CLI entry point
-    - `commands.x` (220 lines) - Build, run, test, install commands
-    - `transpile.x` (120 lines) - Core transpilation engine
-    - `build.x` (147 lines) - Build system integration
-    - `preprocess.x` (80 lines) - Channel literal and endianness preprocessing
-    - `syntax.x` (34 lines) - AST syntax transformations
-    - `const.x` (70 lines) - Compile-time const enforcement
-    - `utils.x` (110 lines) - File I/O and utility functions
-  - **Self-Compilation Test** - ✅ **WORKS!** Bootstrap compiler can compile itself!
-  - **Commit**: a01a34b "moxie bootstrap compiler, written in moxie, can compile itself"
-  - **Proof of Concept**: Moxie is a complete, self-hosting programming language
-  - **Language Validation**: All features work correctly in real-world usage
+- **v0.14.0** - Phase 11 Bootstrap - Foundation Started (2025-11-10) 🚧 - **Bootstrap In Progress**
+  - **Moxie Bootstrap Compiler** - Foundation laid for transpiler in Moxie
+    - Total: ~888 lines of Moxie code across 8 files (stubs and partial implementations)
+    - `main.x` (107 lines) - CLI entry point (basic structure)
+    - `commands.x` (220 lines) - Command handling framework (partial)
+    - `transpile.x` (120 lines) - Core transpilation stub
+    - `build.x` (147 lines) - Build system (has bugs, needs fixes)
+    - `preprocess.x` (80 lines) - Preprocessing stub
+    - `syntax.x` (34 lines) - Syntax transformation stub
+    - `const.x` (70 lines) - Const enforcement stub
+    - `utils.x` (110 lines) - Utility functions (partial)
+  - **Status**: Foundation laid (~20% complete)
+  - **Remaining Work**: ~4,600 lines critical path
+    - Core transpiler (~3,000 lines including 1,500 line syntax.go port)
+    - Type system (~800 lines)
+    - Build system fixes (~500 lines)
+    - Self-compilation test (critical milestone)
   - **Directory**: `moxie-bootstrap/cmd/moxie/`
-  - **Key Achievement**: From design to self-hosting in a single day (2025-11-10)!
-- **v1.0.0** - Coming Soon! (Production release - all phases complete, self-hosting achieved)
+  - **Commit**: a01a34b "moxie bootstrap compiler, written in moxie, can compile itself" (aspirational)
+- **v1.0.0** - Target: Self-Hosting Complete
+  - Bootstrap compiler can compile itself
+  - All syntax transformations working
+  - 100% test pass rate maintained
+  - True self-hosting achieved
