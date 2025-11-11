@@ -1,4 +1,4 @@
-module github.com/mleku/moxie/pkg/antlr
+module github.com/mleku/moxie
 
 go 1.25.3
 

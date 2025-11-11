@@ -40,7 +40,8 @@
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go mod init:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go get:*)",
       "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go test:*)",
-      "Bash(java -jar /tmp/antlr-4.13.2-complete.jar:*)"
+      "Bash(java -jar /tmp/antlr-4.13.2-complete.jar:*)",
+      "Bash(GOROOT=/home/mleku/go GOTOOLCHAIN=local /home/mleku/go/bin/go list:*)"
     ],
     "deny": [],
     "ask": []
